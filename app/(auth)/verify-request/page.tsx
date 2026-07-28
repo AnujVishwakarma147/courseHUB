@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState, useTransition } from "react"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 
 export default function VerifyRequest(){
@@ -66,7 +67,13 @@ function VerifyRequestForm(){
                 </div>
 
                 <Button onClick={verifyOtp} disabled={emailPending || !isOtpCompleted}  className="w-full">
-                    Verify Account
+                   {emailPending ? (
+                    <>
+                    <Loader2 className="size-4 animate-spin"/>
+                    </>
+                   ):(
+                    "varify Account"
+                   )}
                 </Button>
 
             </CardContent>
