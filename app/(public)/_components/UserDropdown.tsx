@@ -33,50 +33,51 @@ interface UserDropdownProps {
     image?: string | null;
 }
 
-export function UserDropdown({email,name,image}:UserDropdownProps) {
-    const router =useRouter();
-    async function signOut() {
-     await authClient.signOut({
-        fetchOptions:{
-            onSuccess:()=>{
-                router.push("/")
-                toast.success("Signed out Successfully")
-            },
-            onError: ()=>{
-                toast.error("Failed to sign out")
-            }
-        }
-     })
-  }
+export function UserDropdown({ email, name, image }: UserDropdownProps) {
+  const router = useRouter();
 
+  async function signOut() {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+          toast.success("Signed out successfully");
+        },
+        onError: () => {
+          toast.error("Failed to sign out");
+        },
+      },
+    });
+  }
 
   return (
     <DropdownMenu>
-      {/* Dropdown Trigger (Avatar & Chevron) */}
-      <DropdownMenuTrigger className="flex h-auto cursor-pointer items-center gap-2 rounded-md p-0 outline-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring">
+      <DropdownMenuTrigger className="flex h-auto shrink-0 cursor-pointer items-center gap-1 rounded-md p-0 outline-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring sm:gap-2">
         <Avatar className="h-9 w-9">
-          <AvatarImage src={image ?? undefined} alt="Profile image"/>
+          <AvatarImage src={image ?? undefined} alt={`${name}'s profile`} />
           <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
-       
-        <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
+
+        <ChevronDownIcon className="hidden h-4 w-4 text-muted-foreground sm:block" />
       </DropdownMenuTrigger>
 
-      {/* Dropdown Content */}
-      <DropdownMenuContent align="end" className="w-56">
-        {/* User Info Header */}
+      <DropdownMenuContent
+        align="end"
+        className="max-w-[calc(100vw-1rem)] w-56"
+      >
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="flex flex-col">
-            <span className="font-semibold text-foreground">{name}</span>
-            <span className="text-xs font-normal text-muted-foreground">
+          <DropdownMenuLabel className="flex min-w-0 flex-col">
+            <span className="truncate font-semibold text-foreground">
+              {name}
+            </span>
+            <span className="truncate text-xs font-normal text-muted-foreground">
               {email}
             </span>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
-        
+
         <DropdownMenuSeparator />
-        
-        {/* Group 1 */}
+
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => router.push("/")}>
             <HouseIcon className="mr-2 h-4 w-4" />
@@ -91,11 +92,13 @@ export function UserDropdown({email,name,image}:UserDropdownProps) {
             <span>Dashboard</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        
+
         <DropdownMenuSeparator />
-        
-        {/* Logout */}
-        <DropdownMenuItem onClick={signOut} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
+
+        <DropdownMenuItem
+          onClick={signOut}
+          className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+        >
           <LogOutIcon className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>

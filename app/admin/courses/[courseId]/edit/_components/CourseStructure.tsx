@@ -21,14 +21,10 @@ import {
   ChevronDown,
   FileText,
   GripVertical,
-  LoaderCircle,
-  Plus,
-  Trash2,
 } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -38,14 +34,11 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-import {
-  createChapter,
-  createLesson,
-  deleteChapter,
-  deleteLesson,
-  reorderChapters,
-  reorderLessons,
-} from "../structure-actions";
+import { reorderChapters, reorderLessons } from "../action";
+import { DeleteChapter } from "./DeleteChapter";
+import { DeleteLesson } from "./DeleteLesson";
+import { NewChapterModal } from "./NewChapterModel";
+import { NewLessonModal } from "./NewLessonModel";
 
 export interface CourseStructureLesson {
   id: string;
@@ -90,13 +83,20 @@ export function CourseStructure({
     const activeType = active.data.current?.type;
     const overType = over.data.current?.type;
 
-    if (activeType === "chapter" && overType === "chapter") {
+    if (activeType === "chapter") {
+      const targetChapterId =
+        overType === "chapter"
+          ? (over.data.current?.itemId as string | undefined)
+          : overType === "lesson"
+            ? (over.data.current?.chapterId as string | undefined)
+            : undefined;
+
+      if (!targetChapterId) return;
+
       const oldIndex = chapters.findIndex(
         ({ id }) => chapterDndId(id) === active.id,
       );
-      const newIndex = chapters.findIndex(
-        ({ id }) => chapterDndId(id) === over.id,
-      );
+      const newIndex = chapters.findIndex(({ id }) => id === targetChapterId);
       if (oldIndex < 0 || newIndex < 0) return;
 
       const previous = chapters;
@@ -105,32 +105,46 @@ export function CourseStructure({
       );
       setChapters(next);
       setIsBusy(true);
+      const toastId = toast.loading("Saving chapter order...");
 
-      const response = await reorderChapters(
-        courseId,
-        next.map(({ id }) => id),
-      );
+      try {
+        const response = await reorderChapters(
+          courseId,
+          next.map(({ id }) => id),
+        );
 
-      if (response.status === "error") {
+        if (response.status === "error") {
+          setChapters(previous);
+          toast.error(response.message, { id: toastId });
+        } else {
+          toast.success(response.message, { id: toastId });
+        }
+      } catch {
         setChapters(previous);
-        toast.error(response.message);
-      } else {
-        toast.success(response.message);
+        toast.error("Could not save chapter order", { id: toastId });
+      } finally {
+        setIsBusy(false);
       }
-      setIsBusy(false);
       return;
     }
 
-    if (activeType === "lesson" && overType === "lesson") {
+    if (activeType === "lesson") {
       const activeChapterId = active.data.current?.chapterId as
         | string
         | undefined;
-      const overChapterId = over.data.current?.chapterId as string | undefined;
+      const overChapterId =
+        overType === "lesson"
+          ? (over.data.current?.chapterId as string | undefined)
+          : overType === "chapter"
+            ? (over.data.current?.itemId as string | undefined)
+            : undefined;
 
       if (!activeChapterId || activeChapterId !== overChapterId) {
         toast.error("Lessons can only be reordered inside their chapter");
         return;
       }
+
+      if (overType !== "lesson") return;
 
       const chapter = chapters.find(({ id }) => id === activeChapterId);
       if (!chapter) return;
@@ -156,120 +170,80 @@ export function CourseStructure({
       );
       setChapters(next);
       setIsBusy(true);
+      const toastId = toast.loading("Saving lesson order...");
 
-      const response = await reorderLessons(
-        courseId,
-        activeChapterId,
-        reorderedLessons.map(({ id }) => id),
-      );
+      try {
+        const response = await reorderLessons(
+          courseId,
+          activeChapterId,
+          reorderedLessons.map(({ id }) => id),
+        );
 
-      if (response.status === "error") {
+        if (response.status === "error") {
+          setChapters(previous);
+          toast.error(response.message, { id: toastId });
+        } else {
+          toast.success(response.message, { id: toastId });
+        }
+      } catch {
         setChapters(previous);
-        toast.error(response.message);
-      } else {
-        toast.success(response.message);
+        toast.error("Could not save lesson order", { id: toastId });
+      } finally {
+        setIsBusy(false);
       }
-      setIsBusy(false);
     }
   }
 
-  async function handleCreateChapter() {
-    setIsBusy(true);
-    const response = await createChapter(courseId);
-
-    if (response.status === "error" || !response.data) {
-      toast.error(response.message);
-    } else {
-      setChapters((current) => [...current, response.data!]);
-      toast.success(response.message);
-    }
-    setIsBusy(false);
+  function handleCreateLesson(
+    chapterId: string,
+    lesson: CourseStructureLesson,
+  ) {
+    setChapters((current) =>
+      current.map((chapter) =>
+        chapter.id === chapterId
+          ? {
+              ...chapter,
+              lessons: [...chapter.lessons, lesson],
+            }
+          : chapter,
+      ),
+    );
   }
 
-  async function handleCreateLesson(chapterId: string) {
-    setIsBusy(true);
-    const response = await createLesson(courseId, chapterId);
-
-    if (response.status === "error" || !response.data) {
-      toast.error(response.message);
-    } else {
-      setChapters((current) =>
-        current.map((chapter) =>
-          chapter.id === chapterId
-            ? {
-                ...chapter,
-                lessons: [...chapter.lessons, response.data!],
-              }
-            : chapter,
-        ),
-      );
-      toast.success(response.message);
-    }
-    setIsBusy(false);
+  function handleDeletedChapter(chapterId: string) {
+    setChapters((current) =>
+      current
+        .filter(({ id }) => id !== chapterId)
+        .map((chapter, index) => ({ ...chapter, position: index + 1 })),
+    );
   }
 
-  async function handleDeleteChapter(chapterId: string) {
-    if (
-      !window.confirm(
-        "Delete this chapter and all of its lessons? This cannot be undone.",
-      )
-    ) {
-      return;
-    }
-
-    setIsBusy(true);
-    const response = await deleteChapter(courseId, chapterId);
-
-    if (response.status === "error") {
-      toast.error(response.message);
-    } else {
-      setChapters((current) =>
-        current
-          .filter(({ id }) => id !== chapterId)
-          .map((chapter, index) => ({ ...chapter, position: index + 1 })),
-      );
-      toast.success(response.message);
-    }
-    setIsBusy(false);
-  }
-
-  async function handleDeleteLesson(chapterId: string, lessonId: string) {
-    if (!window.confirm("Delete this lesson? This cannot be undone.")) return;
-
-    setIsBusy(true);
-    const response = await deleteLesson(courseId, lessonId);
-
-    if (response.status === "error") {
-      toast.error(response.message);
-    } else {
-      setChapters((current) =>
-        current.map((chapter) =>
-          chapter.id === chapterId
-            ? {
-                ...chapter,
-                lessons: chapter.lessons
-                  .filter(({ id }) => id !== lessonId)
-                  .map((lesson, index) => ({
-                    ...lesson,
-                    position: index + 1,
-                  })),
-              }
-            : chapter,
-        ),
-      );
-      toast.success(response.message);
-    }
-    setIsBusy(false);
+  function handleDeletedLesson(chapterId: string, lessonId: string) {
+    setChapters((current) =>
+      current.map((chapter) =>
+        chapter.id === chapterId
+          ? {
+              ...chapter,
+              lessons: chapter.lessons
+                .filter(({ id }) => id !== lessonId)
+                .map((lesson, index) => ({
+                  ...lesson,
+                  position: index + 1,
+                })),
+            }
+          : chapter,
+      ),
+    );
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-8 px-4 py-2 md:px-6 lg:px-10 lg:py-4">
+    <main className="mx-auto w-full max-w-7xl space-y-8 px-4 py-2 md:px-6 lg:px-8 lg:py-4">
       <div>
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
           Course Structure
         </h1>
         <p className="mt-2 text-base text-muted-foreground">
-          Arrange chapters and drag lessons into the order students will see.
+          Here you can update your Course Structure
         </p>
       </div>
 
@@ -278,31 +252,24 @@ export function CourseStructure({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <Card className="overflow-hidden rounded-xl">
-          <CardHeader className="flex flex-row items-center justify-between border-b">
-            <div className="space-y-1">
-              <CardTitle className="text-xl">Chapters</CardTitle>
-              <CardDescription>
+        <Card className="overflow-hidden rounded-none py-0">
+          <CardHeader className="flex min-h-20 flex-row items-center justify-between border-b px-6 py-4 lg:px-9">
+            <div>
+              <CardTitle className="text-2xl">Chapters</CardTitle>
+              <CardDescription className="sr-only">
                 Use the dotted handles to drag and reorder.
               </CardDescription>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-none"
+            <NewChapterModal
+              courseId={courseId}
               disabled={isBusy}
-              onClick={handleCreateChapter}
-            >
-              {isBusy ? (
-                <LoaderCircle className="animate-spin" />
-              ) : (
-                <Plus />
-              )}
-              Add Chapter
-            </Button>
+              onCreated={(chapter) =>
+                setChapters((current) => [...current, chapter])
+              }
+            />
           </CardHeader>
 
-          <CardContent className="p-6 lg:p-9">
+          <CardContent className="p-5 lg:p-9">
             {chapters.length === 0 ? (
               <div className="rounded-lg border border-dashed p-10 text-center">
                 <p className="font-medium">No chapters yet</p>
@@ -315,20 +282,22 @@ export function CourseStructure({
                 items={chapters.map(({ id }) => chapterDndId(id))}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-5">
+                <div className="space-y-8">
                   {chapters.map((chapter, chapterIndex) => (
                     <SortableChapter
                       key={chapter.id}
+                      courseId={courseId}
                       chapter={chapter}
                       chapterNumber={chapterIndex + 1}
                       disabled={isBusy}
-                      onCreateLesson={() => handleCreateLesson(chapter.id)}
-                      onDeleteChapter={() =>
-                        handleDeleteChapter(chapter.id)
+                      onCreateLesson={(lesson) =>
+                        handleCreateLesson(chapter.id, lesson)
                       }
+                      onDeleteChapter={() => handleDeletedChapter(chapter.id)}
                       onDeleteLesson={(lessonId) =>
-                        handleDeleteLesson(chapter.id, lessonId)
+                        handleDeletedLesson(chapter.id, lessonId)
                       }
+                      onPendingChange={setIsBusy}
                     />
                   ))}
                 </div>
@@ -342,21 +311,25 @@ export function CourseStructure({
 }
 
 interface SortableChapterProps {
+  courseId: string;
   chapter: CourseStructureChapter;
   chapterNumber: number;
   disabled: boolean;
-  onCreateLesson: () => void;
+  onCreateLesson: (lesson: CourseStructureLesson) => void;
   onDeleteChapter: () => void;
   onDeleteLesson: (lessonId: string) => void;
+  onPendingChange: (pending: boolean) => void;
 }
 
 function SortableChapter({
+  courseId,
   chapter,
   chapterNumber,
   disabled,
   onCreateLesson,
   onDeleteChapter,
   onDeleteLesson,
+  onPendingChange,
 }: SortableChapterProps) {
   const [isOpen, setIsOpen] = useState(true);
   const {
@@ -381,14 +354,14 @@ function SortableChapter({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "overflow-hidden rounded-lg border bg-card",
+        "overflow-hidden rounded-xl border bg-card",
         isDragging && "relative z-20 opacity-70 shadow-xl",
       )}
     >
-      <div className="flex min-h-16 items-center gap-2 border-b px-3 sm:px-5">
+      <div className="flex min-h-24 items-center gap-3 border-b px-4 sm:px-7">
         <button
           type="button"
-          className="touch-none cursor-grab rounded-md p-2 text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing disabled:pointer-events-none disabled:opacity-50"
+          className="touch-none cursor-grab rounded-md p-2 text-foreground/80 outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing disabled:pointer-events-none disabled:opacity-50"
           aria-label={`Drag chapter ${chapterNumber}`}
           disabled={disabled}
           {...attributes}
@@ -409,36 +382,28 @@ function SortableChapter({
               !isOpen && "-rotate-90",
             )}
           />
-          <span className="truncate text-base font-medium">
-            Chapter Nr. {chapterNumber}
+          <span className="truncate text-xl font-medium">
+            {chapter.title}
           </span>
-          {!/^Chapter Nr\. \d+$/.test(chapter.title) ? (
-            <span className="hidden truncate text-sm text-muted-foreground md:inline">
-              {chapter.title}
-            </span>
-          ) : null}
         </button>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="shrink-0 rounded-none"
-          aria-label={`Delete chapter ${chapterNumber}`}
+        <DeleteChapter
+          courseId={courseId}
+          chapterId={chapter.id}
+          chapterNumber={chapterNumber}
           disabled={disabled}
-          onClick={onDeleteChapter}
-        >
-          <Trash2 />
-        </Button>
+          onDeleted={onDeleteChapter}
+          onPendingChange={onPendingChange}
+        />
       </div>
 
       {isOpen ? (
-        <div className="space-y-3 p-3 sm:p-5">
+        <div className="space-y-4 p-3 sm:p-5">
           <SortableContext
             items={chapter.lessons.map(({ id }) => lessonDndId(id))}
             strategy={verticalListSortingStrategy}
           >
-            <div className="overflow-hidden rounded-md border">
+            <div className="overflow-hidden">
               {chapter.lessons.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
                   No lessons in this chapter yet.
@@ -447,27 +412,25 @@ function SortableChapter({
                 chapter.lessons.map((lesson, lessonIndex) => (
                   <SortableLesson
                     key={lesson.id}
+                    courseId={courseId}
                     chapterId={chapter.id}
                     lesson={lesson}
                     lessonNumber={lessonIndex + 1}
                     disabled={disabled}
                     onDelete={() => onDeleteLesson(lesson.id)}
+                    onPendingChange={onPendingChange}
                   />
                 ))
               )}
             </div>
           </SortableContext>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 w-full rounded-none text-base"
+          <NewLessonModal
+            courseId={courseId}
+            chapterId={chapter.id}
             disabled={disabled}
-            onClick={onCreateLesson}
-          >
-            <Plus />
-            Create New Lesson
-          </Button>
+            onCreated={onCreateLesson}
+          />
         </div>
       ) : null}
     </section>
@@ -475,19 +438,23 @@ function SortableChapter({
 }
 
 interface SortableLessonProps {
+  courseId: string;
   chapterId: string;
   lesson: CourseStructureLesson;
   lessonNumber: number;
   disabled: boolean;
   onDelete: () => void;
+  onPendingChange: (pending: boolean) => void;
 }
 
 function SortableLesson({
+  courseId,
   chapterId,
   lesson,
   lessonNumber,
   disabled,
   onDelete,
+  onPendingChange,
 }: SortableLessonProps) {
   const {
     attributes,
@@ -511,13 +478,13 @@ function SortableLesson({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex min-h-16 items-center gap-2 border-b bg-card px-3 last:border-b-0 sm:px-5",
+        "flex min-h-[76px] items-center gap-3 border-b bg-card px-3 transition-colors last:border-b-0 hover:bg-accent/35 sm:px-5",
         isDragging && "relative z-30 opacity-70 shadow-xl",
       )}
     >
       <button
         type="button"
-        className="touch-none cursor-grab rounded-md p-2 text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing disabled:pointer-events-none disabled:opacity-50"
+        className="touch-none cursor-grab rounded-md p-2 text-foreground/80 outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing disabled:pointer-events-none disabled:opacity-50"
         aria-label={`Drag lesson ${lessonNumber}`}
         disabled={disabled}
         {...attributes}
@@ -527,26 +494,18 @@ function SortableLesson({
       </button>
 
       <FileText className="size-5 shrink-0" />
-      <span className="min-w-0 flex-1 truncate text-base">
-        Lesson Nr. {lessonNumber}
+      <span className="min-w-0 flex-1 truncate text-xl">
+        {lesson.title}
       </span>
-      {!/^Lesson Nr\. \d+$/.test(lesson.title) ? (
-        <span className="hidden max-w-72 truncate text-sm text-muted-foreground md:block">
-          {lesson.title}
-        </span>
-      ) : null}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="shrink-0 rounded-none"
-        aria-label={`Delete lesson ${lessonNumber}`}
+      <DeleteLesson
+        courseId={courseId}
+        lessonId={lesson.id}
+        lessonNumber={lessonNumber}
         disabled={disabled}
-        onClick={onDelete}
-      >
-        <Trash2 />
-      </Button>
+        onDeleted={onDelete}
+        onPendingChange={onPendingChange}
+      />
     </div>
   );
 }
