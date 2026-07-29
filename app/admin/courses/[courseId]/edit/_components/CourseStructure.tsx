@@ -22,6 +22,7 @@ import {
   FileText,
   GripVertical,
 } from "lucide-react";
+import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 
@@ -493,10 +494,14 @@ function SortableLesson({
         <GripVertical className="size-5" />
       </button>
 
-      <FileText className="size-5 shrink-0" />
-      <span className="min-w-0 flex-1 truncate text-xl">
-        {lesson.title}
-      </span>
+      <Link
+        href={`/admin/courses/${courseId}/${chapterId}/${lesson.id}`}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-md py-3 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={`Edit lesson ${lesson.title}`}
+      >
+        <FileText className="size-5 shrink-0" />
+        <span className="truncate text-xl">{lesson.title}</span>
+      </Link>
 
       <DeleteLesson
         courseId={courseId}

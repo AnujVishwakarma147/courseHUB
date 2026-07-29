@@ -4,6 +4,7 @@ import {
   CloudUploadIcon,
   ImageIcon,
   LoaderCircleIcon,
+  VideoIcon,
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -12,22 +13,35 @@ import { Progress } from "@/components/ui/progress";
 
 export function RenderEmptyState({
   isDragActive,
+  mediaType,
 }: {
   isDragActive: boolean;
+  mediaType: "image" | "video";
 }) {
+  const isVideo = mediaType === "video";
+
   return (
     <div className="text-center">
       <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
-        <CloudUploadIcon
-          className={cn(
-            "size-6 text-muted-foreground",
-            isDragActive && "text-primary",
-          )}
-        />
+        {isVideo ? (
+          <VideoIcon
+            className={cn(
+              "size-6 text-muted-foreground",
+              isDragActive && "text-primary",
+            )}
+          />
+        ) : (
+          <CloudUploadIcon
+            className={cn(
+              "size-6 text-muted-foreground",
+              isDragActive && "text-primary",
+            )}
+          />
+        )}
       </div>
 
       <p className="text-base font-semibold text-foreground">
-        Drop your files here or{" "}
+        Drop your {isVideo ? "video" : "image"} here or{" "}
         <span className="cursor-pointer font-bold text-primary">
           Click to upload
         </span>
@@ -37,7 +51,9 @@ export function RenderEmptyState({
         Select File
       </Button>
       <p className="mt-3 text-xs text-muted-foreground">
-        JPG, PNG, WebP, GIF or AVIF · Maximum 5 MB
+        {isVideo
+          ? "MP4, WebM or MOV · Maximum 200 MB"
+          : "JPG, PNG, WebP, GIF or AVIF · Maximum 5 MB"}
       </p>
     </div>
   );
@@ -63,24 +79,37 @@ export function RenderUploadingState({
 
 export function RenderSuccessState({
   previewUrl,
+  mediaType,
   isDeleting,
   onDelete,
 }: {
   previewUrl: string;
+  mediaType: "image" | "video";
   isDeleting: boolean;
   onDelete: () => void;
 }) {
   return (
     <div className="relative flex h-full w-full items-center justify-center">
-      <div className="relative aspect-video w-full max-w-2xl overflow-hidden rounded-sm">
-        <Image
-          src={previewUrl}
-          alt="Course thumbnail preview"
-          fill
-          unoptimized
-          sizes="(max-width: 768px) 90vw, 672px"
-          className="object-cover object-center"
-        />
+      <div className="relative aspect-video w-full max-w-[32rem] overflow-hidden rounded-sm">
+        {mediaType === "video" ? (
+          <video
+            src={previewUrl}
+            controls
+            preload="metadata"
+            className="h-full w-full bg-black object-contain"
+          >
+            Your browser does not support video playback.
+          </video>
+        ) : (
+          <Image
+            src={previewUrl}
+            alt="Thumbnail preview"
+            fill
+            unoptimized
+            sizes="(max-width: 768px) 90vw, 512px"
+            className="object-contain object-center"
+          />
+        )}
       </div>
       <Button
         type="button"

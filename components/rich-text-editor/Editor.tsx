@@ -27,7 +27,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-[300px] max-w-none p-4 text-base focus:outline-none prose prose-sm sm:prose-base dark:prose-invert",
+          "min-h-[300px] max-w-none p-4 text-base focus:outline-none prose prose-sm sm:prose-base dark:prose-invert [&_strong]:font-bold [&_em]:italic [&_s]:line-through",
       },
     },
     onUpdate: ({ editor }) => {
@@ -39,7 +39,9 @@ export function RichTextEditor({
   return (
     <div className="w-full overflow-hidden rounded-none border border-input bg-background dark:bg-input/30">
       <Menubar editor={editor} />
-      <EditorContent editor={editor} />
+      <div className="min-h-[300px]" aria-busy={!editor}>
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }

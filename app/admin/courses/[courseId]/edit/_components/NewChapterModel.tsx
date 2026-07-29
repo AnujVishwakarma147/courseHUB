@@ -97,7 +97,7 @@ export function NewChapterModal({
         New Chapter
       </DialogTrigger>
 
-      <DialogContent className="gap-5 rounded-md p-6 sm:max-w-[450px]">
+      <DialogContent className="gap-5 rounded-md p-6 sm:max-w-112.5">
         <DialogHeader>
           <DialogTitle>Create new chapter</DialogTitle>
           <DialogDescription>

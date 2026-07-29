@@ -33,6 +33,7 @@ interface UploaderProps {
   value?: string;
   initialPreviewUrl?: string;
   onChange: (key: string) => void;
+  mediaType?: "image" | "video";
 }
 
 const initialState: UploaderState = {
@@ -51,7 +52,11 @@ export function Uploader({
   value,
   initialPreviewUrl,
   onChange,
+  mediaType = "image",
 }: UploaderProps) {
+  const isVideo = mediaType === "video";
+  const maxFileSize = isVideo ? 200 * 1024 * 1024 : 5 * 1024 * 1024;
+  const fileLabel = isVideo ? "Video" : "Thumbnail";
   const [fileState, setFileState] = useState<UploaderState>({
     ...initialState,
     key: value || undefined,
@@ -84,6 +89,7 @@ export function Uploader({
             fileName: file.name,
             contentType: file.type,
             size: file.size,
+            mediaType,
           }),
         });
         const uploadData = (await response.json()) as {
@@ -157,7 +163,7 @@ export function Uploader({
           key: uploadedKey,
         }));
         onChange(uploadedKey);
-        toast.success("Thumbnail uploaded successfully");
+        toast.success(`${fileLabel} uploaded successfully`);
       } catch (error) {
         setFileState((current) => ({
           ...current,
@@ -165,11 +171,13 @@ export function Uploader({
           error: true,
         }));
         toast.error(
-          error instanceof Error ? error.message : "Thumbnail upload failed",
+          error instanceof Error
+            ? error.message
+            : `${fileLabel} upload failed`,
         );
       }
     },
-    [onChange],
+    [fileLabel, mediaType, onChange],
   );
 
   const onDrop = useCallback(
@@ -197,7 +205,7 @@ export function Uploader({
 
       if (fileSizeTooBig) {
         toast.error(
-          "File size exceeds the 5MB limit",
+          `File size exceeds the ${isVideo ? "200 MB" : "5 MB"} limit`,
         );
       }
 
@@ -221,11 +229,11 @@ export function Uploader({
   } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [],
+      [isVideo ? "video/*" : "image/*"]: [],
     },
     maxFiles: 1,
     multiple: false,
-    maxSize: 5 * 1024 * 1024,
+    maxSize: maxFileSize,
     onDropRejected: rejectedFiles,
     disabled: fileState.uploading || fileState.isDeleting,
     noClick: Boolean(fileState.key),
@@ -240,7 +248,7 @@ export function Uploader({
       const response = await fetch("/api/s3/delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: fileState.key }),
+        body: JSON.stringify({ key: fileState.key, resourceType: mediaType }),
       });
       const result = (await response.json()) as { error?: string };
 
@@ -249,11 +257,13 @@ export function Uploader({
       revokeBlobUrl(fileState.objectUrl);
       setFileState(initialState);
       onChange("");
-      toast.success("Thumbnail deleted successfully");
+      toast.success(`${fileLabel} deleted successfully`);
     } catch (error) {
       setFileState((current) => ({ ...current, isDeleting: false }));
       toast.error(
-        error instanceof Error ? error.message : "Could not delete thumbnail",
+        error instanceof Error
+          ? error.message
+          : `Could not delete ${fileLabel.toLowerCase()}`,
       );
     }
   }
@@ -284,6 +294,7 @@ export function Uploader({
         ) : fileState.key && fileState.objectUrl ? (
           <RenderSuccessState
             previewUrl={fileState.objectUrl}
+            mediaType={mediaType}
             isDeleting={fileState.isDeleting}
             onDelete={deleteFile}
           />
@@ -292,6 +303,7 @@ export function Uploader({
         ) : (
           <RenderEmptyState
             isDragActive={isDragActive}
+            mediaType={mediaType}
           />
         )}
       </CardContent>
