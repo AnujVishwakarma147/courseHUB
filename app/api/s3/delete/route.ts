@@ -26,15 +26,19 @@ export async function DELETE(request: Request) {
 
     if (session.user.role !== "admin") {
       return NextResponse.json(
-        { error: "Only admins can delete course thumbnails" },
+        { error: "Only admins can delete course media" },
         { status: 403 },
       );
     }
 
     const body = await request.json();
     const key = body.key;
+    const resourceType = body.resourceType === "video" ? "video" : "image";
 
-    const userPrefix = `course-thumbnails/${session.user.id}/`;
+    const userPrefix =
+      resourceType === "video"
+        ? `course-videos/${session.user.id}/`
+        : `course-thumbnails/${session.user.id}/`;
 
     if (typeof key !== "string" || !key.startsWith(userPrefix)) {
       return NextResponse.json(
@@ -53,7 +57,7 @@ export async function DELETE(request: Request) {
       timestamp: String(timestamp),
     });
     const cloudinaryResponse = await fetch(
-      `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/destroy`,
+      `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/${resourceType}/destroy`,
       {
         method: "POST",
         headers: {

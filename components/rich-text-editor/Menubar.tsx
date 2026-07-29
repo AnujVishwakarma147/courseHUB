@@ -19,10 +19,6 @@ import {
   Undo2,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
-import { cn } from "@/lib/utils";
-
 interface MenubarProps {
   editor: Editor | null;
 }
@@ -30,6 +26,7 @@ interface MenubarProps {
 interface ToolbarToggleProps {
   label: string;
   active: boolean;
+  disabled?: boolean;
   onPressedChange: () => void;
   children: ReactNode;
 }
@@ -37,24 +34,27 @@ interface ToolbarToggleProps {
 function ToolbarToggle({
   label,
   active,
+  disabled = false,
   onPressedChange,
   children,
 }: ToolbarToggleProps) {
   return (
-    <Toggle
+    <button
       type="button"
-      size="sm"
-      pressed={active}
       aria-label={label}
+      aria-pressed={active}
       title={label}
-      onPressedChange={onPressedChange}
-      className={cn(
-        "size-8 p-0",
-        active && "bg-muted text-foreground",
-      )}
+      disabled={disabled}
+      onMouseDown={(event) => {
+        // Keep the current ProseMirror selection while using the toolbar.
+        event.preventDefault();
+      }}
+      onClick={onPressedChange}
+      className="inline-flex size-8 items-center justify-center rounded-md text-sm font-medium transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[active=true]:bg-muted data-[active=true]:text-foreground"
+      data-active={active}
     >
       {children}
-    </Toggle>
+    </button>
   );
 }
 
@@ -72,23 +72,48 @@ function ToolbarButton({
   children,
 }: ToolbarButtonProps) {
   return (
-    <Button
+    <button
       type="button"
-      size="sm"
-      variant="ghost"
       disabled={disabled}
       aria-label={label}
       title={label}
+      onMouseDown={(event) => {
+        event.preventDefault();
+      }}
       onClick={onClick}
-      className="size-8 p-0"
+      className="inline-flex size-8 items-center justify-center rounded-md text-sm font-medium transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
     >
       {children}
-    </Button>
+    </button>
   );
 }
 
 function ToolbarSeparator() {
   return <div className="mx-2 h-6 w-px bg-border" />;
+}
+
+type ExclusiveMark = "bold" | "italic" | "strike";
+
+function toggleExclusiveMark(editor: Editor, mark: ExclusiveMark) {
+  const isOnlyActive =
+    editor.isActive(mark) &&
+    (mark === "bold" || !editor.isActive("bold")) &&
+    (mark === "italic" || !editor.isActive("italic")) &&
+    (mark === "strike" || !editor.isActive("strike"));
+  const chain = editor
+    .chain()
+    .focus()
+    .unsetBold()
+    .unsetItalic()
+    .unsetStrike();
+
+  if (!isOnlyActive) {
+    if (mark === "bold") chain.setBold();
+    if (mark === "italic") chain.setItalic();
+    if (mark === "strike") chain.setStrike();
+  }
+
+  chain.run();
 }
 
 export function Menubar({ editor }: MenubarProps) {
@@ -97,10 +122,21 @@ export function Menubar({ editor }: MenubarProps) {
     selector: ({ editor: currentEditor }) => {
       if (!currentEditor) return null;
 
+      const bold = currentEditor.isActive("bold");
+      const italic = currentEditor.isActive("italic");
+      const strike = currentEditor.isActive("strike");
+      const activeMark: ExclusiveMark | null = bold
+        ? "bold"
+        : italic
+          ? "italic"
+          : strike
+            ? "strike"
+            : null;
+
       return {
-        bold: currentEditor.isActive("bold"),
-        italic: currentEditor.isActive("italic"),
-        strike: currentEditor.isActive("strike"),
+        bold: activeMark === "bold",
+        italic: activeMark === "italic",
+        strike: activeMark === "strike",
         heading1: currentEditor.isActive("heading", { level: 1 }),
         heading2: currentEditor.isActive("heading", { level: 2 }),
         heading3: currentEditor.isActive("heading", { level: 3 }),
@@ -115,9 +151,22 @@ export function Menubar({ editor }: MenubarProps) {
     },
   });
 
-  if (!editor || !toolbarState) {
-    return null;
-  }
+  const state = toolbarState ?? {
+    bold: false,
+    italic: false,
+    strike: false,
+    heading1: false,
+    heading2: false,
+    heading3: false,
+    bulletList: false,
+    orderedList: false,
+    alignLeft: true,
+    alignCenter: false,
+    alignRight: false,
+    canUndo: false,
+    canRedo: false,
+  };
+  const isEditorReady = Boolean(editor);
 
   return (
     <div className="flex flex-wrap items-center gap-1 border-b border-input bg-card p-2">
@@ -126,9 +175,10 @@ export function Menubar({ editor }: MenubarProps) {
         <div className="flex flex-wrap items-center gap-1">
           <ToolbarToggle
             label="Bold"
-            active={toolbarState.bold}
+            active={state.bold}
+            disabled={!isEditorReady}
             onPressedChange={() => {
-              editor.chain().focus().toggleBold().run();
+              if (editor) toggleExclusiveMark(editor, "bold");
             }}
           >
             <Bold className="size-4" />
@@ -136,9 +186,10 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarToggle
             label="Italic"
-            active={toolbarState.italic}
+            active={state.italic}
+            disabled={!isEditorReady}
             onPressedChange={() => {
-              editor.chain().focus().toggleItalic().run();
+              if (editor) toggleExclusiveMark(editor, "italic");
             }}
           >
             <Italic className="size-4" />
@@ -146,9 +197,10 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarToggle
             label="Strikethrough"
-            active={toolbarState.strike}
+            active={state.strike}
+            disabled={!isEditorReady}
             onPressedChange={() => {
-              editor.chain().focus().toggleStrike().run();
+              if (editor) toggleExclusiveMark(editor, "strike");
             }}
           >
             <Strikethrough className="size-4" />
@@ -161,10 +213,11 @@ export function Menubar({ editor }: MenubarProps) {
         <div className="flex flex-wrap items-center gap-1">
           <ToolbarToggle
             label="Heading 1"
-            active={toolbarState.heading1}
+            active={state.heading1}
+            disabled={!isEditorReady}
             onPressedChange={() => {
               editor
-                .chain()
+                ?.chain()
                 .focus()
                 .toggleHeading({ level: 1 })
                 .run();
@@ -175,10 +228,11 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarToggle
             label="Heading 2"
-            active={toolbarState.heading2}
+            active={state.heading2}
+            disabled={!isEditorReady}
             onPressedChange={() => {
               editor
-                .chain()
+                ?.chain()
                 .focus()
                 .toggleHeading({ level: 2 })
                 .run();
@@ -189,10 +243,11 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarToggle
             label="Heading 3"
-            active={toolbarState.heading3}
+            active={state.heading3}
+            disabled={!isEditorReady}
             onPressedChange={() => {
               editor
-                .chain()
+                ?.chain()
                 .focus()
                 .toggleHeading({ level: 3 })
                 .run();
@@ -208,9 +263,10 @@ export function Menubar({ editor }: MenubarProps) {
         <div className="flex flex-wrap items-center gap-1">
           <ToolbarToggle
             label="Bullet List"
-            active={toolbarState.bulletList}
+            active={state.bulletList}
+            disabled={!isEditorReady}
             onPressedChange={() => {
-              editor.chain().focus().toggleBulletList().run();
+              editor?.chain().focus().toggleBulletList().run();
             }}
           >
             <ListIcon className="size-4" />
@@ -218,9 +274,10 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarToggle
             label="Ordered List"
-            active={toolbarState.orderedList}
+            active={state.orderedList}
+            disabled={!isEditorReady}
             onPressedChange={() => {
-              editor.chain().focus().toggleOrderedList().run();
+              editor?.chain().focus().toggleOrderedList().run();
             }}
           >
             <ListOrdered className="size-4" />
@@ -233,9 +290,10 @@ export function Menubar({ editor }: MenubarProps) {
         <div className="flex flex-wrap items-center gap-1">
           <ToolbarToggle
             label="Align Left"
-            active={toolbarState.alignLeft}
+            active={state.alignLeft}
+            disabled={!isEditorReady}
             onPressedChange={() => {
-              editor.chain().focus().setTextAlign("left").run();
+              editor?.chain().focus().setTextAlign("left").run();
             }}
           >
             <AlignLeft className="size-4" />
@@ -243,10 +301,11 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarToggle
             label="Align Center"
-            active={toolbarState.alignCenter}
+            active={state.alignCenter}
+            disabled={!isEditorReady}
             onPressedChange={() => {
               editor
-                .chain()
+                ?.chain()
                 .focus()
                 .setTextAlign("center")
                 .run();
@@ -257,10 +316,11 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarToggle
             label="Align Right"
-            active={toolbarState.alignRight}
+            active={state.alignRight}
+            disabled={!isEditorReady}
             onPressedChange={() => {
               editor
-                .chain()
+                ?.chain()
                 .focus()
                 .setTextAlign("right")
                 .run();
@@ -276,9 +336,9 @@ export function Menubar({ editor }: MenubarProps) {
         <div className="flex flex-wrap items-center gap-1">
           <ToolbarButton
             label="Undo"
-            disabled={!toolbarState.canUndo}
+            disabled={!isEditorReady || !state.canUndo}
             onClick={() => {
-              editor.chain().focus().undo().run();
+              editor?.chain().focus().undo().run();
             }}
           >
             <Undo2 className="size-4" />
@@ -286,9 +346,9 @@ export function Menubar({ editor }: MenubarProps) {
 
           <ToolbarButton
             label="Redo"
-            disabled={!toolbarState.canRedo}
+            disabled={!isEditorReady || !state.canRedo}
             onClick={() => {
-              editor.chain().focus().redo().run();
+              editor?.chain().focus().redo().run();
             }}
           >
             <Redo2 className="size-4" />
