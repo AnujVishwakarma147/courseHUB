@@ -24,8 +24,12 @@ export default async function CoursesPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {data.map((course) => (
-          <AdminCourseCard key={course.id} data={course} />
+        {data.map((course, index) => (
+          <AdminCourseCard
+            key={course.id}
+            data={course}
+            priority={index === 0}
+          />
         ))}
       </div>
     </div>

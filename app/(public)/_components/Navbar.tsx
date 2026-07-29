@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { ThemeToggle } from "@/components/ui/themeToggle";
 import { UserDropdown } from "./UserDropdown";
 import { buttonVariants } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const navigationItems = [
   { name: "Home", href: "/" },
@@ -15,13 +16,17 @@ const navigationItems = [
   { name: "Dashboard", href: "/dashboard" },
 ];
 
-export function Navbar() {
+interface NavbarProps {
+  hasSessionCookie: boolean;
+}
+
+export function Navbar({ hasSessionCookie }: NavbarProps) {
   const { data: session, isPending } = authClient.useSession();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container mx-auto flex min-h-16 items-center px-4 md:px-6 lg:px-8">
-        <Link href="/" className="mr-4 flex items-center space-x-2">
+      <div className="flex min-h-16 w-full items-center gap-3 px-4 md:px-6 lg:px-8">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <Image
             src={Logo}
             alt="MarshalLMS logo"
@@ -29,44 +34,61 @@ export function Navbar() {
             priority
           />
 
-          <span className="font-bold">MarshalLMS.</span>
+          <span className="hidden font-bold sm:inline">MarshalLMS.</span>
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-between md:flex">
-          <div className="flex items-center space-x-4">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-sm font-medium transition-colors hover:text-primary"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
-
-            {isPending ? null : session ? (
-              <UserDropdown email={session.user.email}  image={session.user.image} name={session.user.name}/>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className={buttonVariants({ variant: "secondary" })}
-                >
-                  Login
-                </Link>
-
-                <Link href="/login" className={buttonVariants()}>
-                  Get Started
-                </Link>
-              </>
-            )}
-          </div>
+        <nav className="hidden min-w-0 flex-1 items-center gap-5 md:flex">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              {item.name}
+            </Link>
+          ))}
         </nav>
+
+        <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-2 sm:gap-3 md:right-6 lg:right-8">
+          <ThemeToggle />
+
+          {isPending ? (
+            hasSessionCookie ? (
+              <Skeleton className="size-9 rounded-full" />
+            ) : (
+              <GuestActions />
+            )
+          ) : session ? (
+            <UserDropdown
+              email={session.user.email}
+              image={session.user.image}
+              name={session.user.name}
+            />
+          ) : (
+            <GuestActions />
+          )}
+        </div>
       </div>
     </header>
+  );
+}
+
+function GuestActions() {
+  return (
+    <>
+      <Link
+        href="/login"
+        className={buttonVariants({ variant: "secondary" })}
+      >
+        Login
+      </Link>
+
+      <Link
+        href="/login"
+        className={buttonVariants({ className: "hidden sm:inline-flex" })}
+      >
+        Get Started
+      </Link>
+    </>
   );
 }
