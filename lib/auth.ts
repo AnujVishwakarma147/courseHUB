@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./db";
 import { env } from "./env";
-import { emailOTP } from "better-auth/plugins";
+import { admin, emailOTP } from "better-auth/plugins";
 import { resend } from "./resend";
 
 export const auth = betterAuth({
@@ -22,6 +22,10 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"],
+    }),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
         await resend.emails.send({
