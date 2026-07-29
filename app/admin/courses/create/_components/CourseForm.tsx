@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfetti } from "@/hooks/use-confetti";
 import {
   courseCategories,
   courseLevels,
@@ -68,6 +69,7 @@ export function CourseForm({
   courseId,
 }: CourseFormProps) {
   const router = useRouter();
+  const triggerConfetti = useConfetti();
   const [values, setValues] = useState<CourseFormValues>(initialValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<
@@ -128,6 +130,11 @@ export function CourseForm({
           ? "Course updated successfully"
           : "Course created successfully",
       );
+
+      if (mode === "create") {
+        triggerConfetti();
+      }
+
       router.push("/admin/courses");
       router.refresh();
     } catch {

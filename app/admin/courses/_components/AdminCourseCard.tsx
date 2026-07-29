@@ -3,6 +3,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { env } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,6 +120,41 @@ export function AdminCourseCard({ data, priority = false }: iAppProps) {
           Edit Course
           <ArrowRight className="ml-1 size-4" />
         </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function AdminCourseCardSkeleton() {
+  return (
+    <Card
+      aria-hidden="true"
+      className="group relative gap-0 overflow-hidden py-0"
+    >
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="size-8 rounded-md" />
+      </div>
+
+      <Skeleton className="aspect-video w-full rounded-none" />
+
+      <CardContent className="space-y-4 p-4">
+        <Skeleton className="h-5 w-2/3" />
+        <Skeleton className="h-4 w-full" />
+
+        <div className="flex items-center gap-x-5">
+          <div className="flex items-center gap-x-2">
+            <Skeleton className="size-6" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+
+          <div className="flex items-center gap-x-2">
+            <Skeleton className="size-6" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+
+        <Skeleton className="h-9 w-full" />
       </CardContent>
     </Card>
   );
