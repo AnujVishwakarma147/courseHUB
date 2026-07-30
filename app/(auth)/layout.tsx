@@ -12,7 +12,7 @@ export default function AuthLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-svh flex-col items-center justify-center px-4">
+    <div className="relative flex min-h-svh flex-col items-center justify-center overflow-x-hidden px-4 lg:min-h-[125svh] lg:[zoom:0.8]">
       <Link
         href="/"
         className={cn(

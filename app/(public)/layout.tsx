@@ -14,10 +14,10 @@ export default async function PublicLayout({
   const hasSessionCookie = Boolean(getSessionCookie(await headers()));
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-clip lg:min-h-[125vh] lg:[zoom:0.8]">
       <Navbar hasSessionCookie={hasSessionCookie} />
 
-      <main className="container mx-auto px-4 md:px-6 lg:px-8">
+      <main className="w-full px-4 md:px-6 lg:px-10">
         {children}
       </main>
     </div>

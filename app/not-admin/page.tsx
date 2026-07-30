@@ -11,7 +11,7 @@ import Link from "next/link";
 
 export default function NotAdminRoute() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center overflow-x-hidden lg:min-h-[125vh] lg:[zoom:0.8]">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-fit rounded-full bg-destructive/10 p-4">
