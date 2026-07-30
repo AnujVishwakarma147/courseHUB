@@ -189,3 +189,18 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .admin-shell {
+    --background: oklch(0.225 0.004 70);
+    --foreground: oklch(0.89 0.008 90);
+    --card: oklch(0.245 0.004 70);
+    --card-foreground: oklch(0.97 0.004 90);
+    --muted: oklch(0.205 0.004 70);
+    --muted-foreground: oklch(0.72 0.008 90);
+    --border: oklch(0.31 0.006 70);
+    --sidebar: oklch(0.195 0.005 55);
+    --sidebar-foreground: oklch(0.82 0.008 90);
+    --sidebar-border: oklch(0.28 0.006 65);
+  }
+}

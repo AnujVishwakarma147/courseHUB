@@ -93,16 +93,21 @@ const data = {
 }
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+    <Sidebar
+      collapsible="offcanvas"
+      {...props}
+    >
+      <SidebarHeader className="px-5 pb-3 pt-5">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="h-12 gap-3 rounded-none px-2 text-sidebar-foreground hover:bg-transparent"
               render={<a href="#" />}
             >
-              <BookMarkedIcon className="size-5!" />
-              <span className="text-base font-semibold">CourseHub.</span>
+              <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <BookMarkedIcon className="size-4!" />
+              </span>
+              <span className="text-xl font-semibold tracking-tight">CourseHub.</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

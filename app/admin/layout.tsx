@@ -12,19 +12,20 @@ export default async function AdminLayout({
 
     return(
          <SidebarProvider
+      className="admin-shell dark"
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
+          "--sidebar-width": "calc(var(--spacing) * 88)",
+          "--header-height": "calc(var(--spacing) * 17)",
         } as React.CSSProperties
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>
+      <SidebarInset className="min-w-0 md:peer-data-[variant=inset]:rounded-md">
         <SiteHeader />
         <div className="flex flex-1 flex-col overflow-x-hidden">
           <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <div className="flex flex-col gap-5 py-5 md:gap-6 md:py-7">
               {children}
             </div>
           </div>

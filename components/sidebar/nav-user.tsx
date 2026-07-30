@@ -29,6 +29,7 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
 } from "lucide-react"
+import Link from "next/link"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
@@ -52,7 +53,10 @@ export function NavUser() {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
+              <SidebarMenuButton
+                size="lg"
+                className="h-14 rounded-none px-3 aria-expanded:bg-muted"
+              />
             }
           >
             <Avatar className="size-8 rounded-md">
@@ -91,15 +95,15 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem render={<a href="/" />}>
+              <DropdownMenuItem render={<Link href="/" />}>
                 <HouseIcon />
                 Homepage
               </DropdownMenuItem>
-              <DropdownMenuItem render={<a href="/dashboard" />}>
+              <DropdownMenuItem render={<Link href="/dashboard" />}>
                 <LayoutDashboardIcon />
                 Dashboard
               </DropdownMenuItem>
-              <DropdownMenuItem render={<a href="/courses" />}>
+              <DropdownMenuItem render={<Link href="/courses" />}>
                 <BookOpenIcon />
                 Courses
               </DropdownMenuItem>

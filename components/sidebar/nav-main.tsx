@@ -8,6 +8,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { CirclePlusIcon } from "lucide-react"
+import Link from "next/link"
 
 export function NavMain({
   items,
@@ -25,8 +26,8 @@ export function NavMain({
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Quick Create"
-              render={<a href="/admin/courses/create" />}
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              render={<Link href="/admin/courses/create" />}
+              className="h-12 min-w-8 rounded-none bg-primary px-4 text-base text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
             >
               <CirclePlusIcon
               />
@@ -39,7 +40,8 @@ export function NavMain({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 tooltip={item.title}
-                render={<a href={item.url} />}
+                render={<Link href={item.url} />}
+                className="h-11 rounded-none px-4 text-base"
               >
                 {item.icon}
                 <span>{item.title}</span>

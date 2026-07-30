@@ -53,12 +53,12 @@ export function UserDropdown({ email, name, image }: UserDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex h-auto shrink-0 cursor-pointer items-center gap-1 rounded-md p-0 outline-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring sm:gap-2">
-        <Avatar className="h-9 w-9">
+        <Avatar className="h-9 w-9 lg:h-10 lg:w-10">
           <AvatarImage src={image ?? undefined} alt={`${name}'s profile`} />
           <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
 
-        <ChevronDownIcon className="hidden h-4 w-4 text-muted-foreground sm:block" />
+        <ChevronDownIcon className="hidden h-4 w-4 text-muted-foreground sm:block lg:h-5 lg:w-5" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
