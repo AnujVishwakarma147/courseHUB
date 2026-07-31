@@ -8,6 +8,8 @@ export const courseLevels = [
 
 export const courseStatus = ["Draft", "Published", "Archived"] as const;
 
+export const minimumPaidCoursePrice = 50;
+
 export const courseCategories = [
   "Development",
   "Business",
@@ -52,9 +54,10 @@ export const courseSchema = z.object({
 
   fileKey: z.string().min(1, "Course image is required"),
 
-  price: z.coerce
-    .number()
-    .min(1, "Price must be at least 1"),
+  price: z.coerce.number().refine(
+    (price) => price === 0 || price >= minimumPaidCoursePrice,
+    `Use 0 for a free course or at least ₹${minimumPaidCoursePrice} for Stripe`,
+  ),
 
   duration: z.coerce
     .number()

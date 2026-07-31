@@ -43,8 +43,12 @@ async function RenderCourses() {
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {courses.map((course) => (
-        <PublicCourseCard key={course.id} data={course} />
+      {courses.map((course, index) => (
+        <PublicCourseCard
+          key={course.id}
+          data={course}
+          priority={index === 0}
+        />
       ))}
     </div>
   );

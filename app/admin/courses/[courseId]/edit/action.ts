@@ -223,6 +223,23 @@ export async function createChapter(
     }
 
     const chapter = await prisma.$transaction(async (tx) => {
+      const duplicateChapter = await tx.chapter.findFirst({
+        where: {
+          courseId: result.data.courseId,
+          title: {
+            equals: result.data.name,
+            mode: "insensitive",
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (duplicateChapter) {
+        return null;
+      }
+
       const maxPos = await tx.chapter.findFirst({
         where: {
           courseId: result.data.courseId,
@@ -248,6 +265,13 @@ export async function createChapter(
         },
       });
     });
+
+    if (!chapter) {
+      return {
+        status: "error",
+        message: "You have already created a chapter with this name.",
+      };
+    }
 
     revalidatePath(`/admin/courses/${result.data.courseId}/edit`);
 
@@ -304,6 +328,23 @@ export async function createLesson(
         throw new Error("Chapter not found");
       }
 
+      const duplicateLesson = await tx.lesson.findFirst({
+        where: {
+          chapterId: result.data.chapterId,
+          title: {
+            equals: result.data.name,
+            mode: "insensitive",
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (duplicateLesson) {
+        return null;
+      }
+
       return tx.lesson.create({
         data: {
           title: result.data.name,
@@ -320,6 +361,13 @@ export async function createLesson(
         },
       });
     });
+
+    if (!lesson) {
+      return {
+        status: "error",
+        message: "You have already created a lesson with this name.",
+      };
+    }
 
     revalidatePath(`/admin/courses/${result.data.courseId}/edit`);
 
