@@ -77,6 +77,7 @@ export function AdminCourseCard({ data, priority = false }: iAppProps) {
         alt={data.title}
         width={600}
         height={400}
+        sizes="(min-width: 768px) 50vw, 100vw"
         priority={priority}
         className="aspect-video h-full w-full rounded-t-lg object-cover"
       />

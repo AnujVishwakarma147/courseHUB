@@ -10,9 +10,10 @@ import Link from "next/link";
 
 interface iAppProps {
   data: PublicCourseType;
+  priority?: boolean;
 }
 
-export function PublicCourseCard({ data }: iAppProps) {
+export function PublicCourseCard({ data, priority = false }: iAppProps) {
   const thumbnailUrl =
     `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}` +
     `/image/upload/${data.fileKey}`;
@@ -28,6 +29,8 @@ export function PublicCourseCard({ data }: iAppProps) {
         alt={data.title}
         width={600}
         height={400}
+        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+        priority={priority}
         className="aspect-video w-full object-cover"
       />
 

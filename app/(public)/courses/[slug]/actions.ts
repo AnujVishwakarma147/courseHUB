@@ -3,7 +3,11 @@
 import { requireUser } from "@/app/data/user/require-user";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { getGstTaxRateId, getStripeClient } from "@/lib/stripe";
+import {
+  getGstTaxRateId,
+  getMinimumStripeCourseAmount,
+  getStripeClient,
+} from "@/lib/stripe";
 import { ApiResponse } from "@/lib/types";
 
 type EnrollmentCheckoutData = {
@@ -61,8 +65,8 @@ export async function enrollInCourseAction(
       },
     });
 
-    const courseUrl = new URL(
-      `/courses/${course.slug}`,
+    const learningUrl = new URL(
+      `/dashboard/${course.slug}`,
       env.BETTER_AUTH_URL,
     ).toString();
 
@@ -71,7 +75,7 @@ export async function enrollInCourseAction(
         status: "success",
         message: "You are already enrolled in this course.",
         data: {
-          redirectUrl: courseUrl,
+          redirectUrl: learningUrl,
         },
       };
     }
@@ -102,8 +106,20 @@ export async function enrollInCourseAction(
         status: "success",
         message: "You have been enrolled successfully.",
         data: {
-          redirectUrl: `${courseUrl}?enrolled=true`,
+          redirectUrl: learningUrl,
         },
+      };
+    }
+
+    const minimumCharge = getMinimumStripeCourseAmount();
+
+    if (courseAmount < minimumCharge.minorUnits) {
+      return {
+        status: "error",
+        message:
+          `Stripe cannot process this amount for the configured account. ` +
+          `Set the course price to at least ${minimumCharge.displayAmount}, ` +
+          "or set it to 0 for a free course.",
       };
     }
 
@@ -303,7 +319,7 @@ export async function confirmStripeCheckoutAction(
       status: "success",
       message: "Payment successful. You are now enrolled!",
       data: {
-        watchUrl: `/courses/${course.slug}#course-content`,
+        watchUrl: `/dashboard/${course.slug}`,
       },
     };
   } catch (error) {

@@ -203,4 +203,19 @@
     --sidebar-foreground: oklch(0.82 0.008 90);
     --sidebar-border: oklch(0.28 0.006 65);
   }
+
+  .dark .course-player-shell {
+    --background: oklch(0.245 0.004 70);
+    --foreground: oklch(0.8 0.006 90);
+    --card: oklch(0.265 0.004 70);
+    --card-foreground: oklch(0.9 0.004 90);
+    --muted: oklch(0.315 0.006 70);
+    --muted-foreground: oklch(0.72 0.006 90);
+    --border: oklch(0.365 0.006 70);
+    --sidebar: oklch(0.195 0.005 55);
+    --sidebar-foreground: oklch(0.8 0.006 90);
+    --sidebar-accent: oklch(0.24 0.004 70);
+    --sidebar-accent-foreground: oklch(0.86 0.004 90);
+    --sidebar-border: oklch(0.28 0.006 65);
+  }
 }

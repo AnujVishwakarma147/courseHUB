@@ -56,10 +56,7 @@ async function EnrollmentChart() {
 }
 
 async function RenderRecentCourses() {
-  const [courses] = await Promise.all([
-    adminGetRecentCourses(),
-    new Promise((resolve) => setTimeout(resolve, 2000)),
-  ]);
+  const courses = await adminGetRecentCourses();
 
   if (courses.length === 0) {
     return (

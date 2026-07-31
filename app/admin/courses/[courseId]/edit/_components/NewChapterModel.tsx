@@ -60,6 +60,7 @@ export function NewChapterModal({
         const response = await createChapter(validation.data);
 
         if (response.status === "error" || !response.data) {
+          setError(response.message);
           toast.error(response.message);
           return;
         }
@@ -114,7 +115,10 @@ export function NewChapterModal({
               placeholder="Chapter Name"
               value={name}
               disabled={pending}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                if (error) setError("");
+              }}
               aria-invalid={Boolean(error)}
               aria-describedby={error ? "chapter-name-error" : undefined}
               autoFocus

@@ -33,6 +33,7 @@ import { useConfetti } from "@/hooks/use-confetti";
 import {
   courseCategories,
   courseLevels,
+  minimumPaidCoursePrice,
   courseStatus,
   courseSchema,
   type CourseSchemaType,
@@ -313,13 +314,13 @@ export function CourseForm({
                 />
               </FormField>
 
-              <FormField label="Price ($)" error={errors.price}>
+              <FormField label="Price (INR)" error={errors.price}>
                 <Input
                   id="price"
                   type="number"
-                  min="1"
+                  min="0"
                   step="0.01"
-                  placeholder="0"
+                  placeholder={`0 or ${minimumPaidCoursePrice}+`}
                   value={values.price}
                   aria-invalid={Boolean(errors.price)}
                   className="h-12 rounded-none px-4 text-base"

@@ -66,6 +66,7 @@ export function NewLessonModal({
         const response = await createLesson(validation.data);
 
         if (response.status === "error" || !response.data) {
+          setError(response.message);
           toast.error(response.message);
           return;
         }
@@ -120,7 +121,10 @@ export function NewLessonModal({
               placeholder="Lesson Name"
               value={name}
               disabled={pending}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                if (error) setError("");
+              }}
               aria-invalid={Boolean(error)}
               aria-describedby={
                 error ? `lesson-name-error-${chapterId}` : undefined

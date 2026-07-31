@@ -6,6 +6,20 @@ import { env } from "./env";
 let stripeClient: Stripe | undefined;
 let gstTaxRateIdPromise: Promise<string> | undefined;
 
+export function getMinimumStripeCourseAmount() {
+  if (env.STRIPE_CURRENCY === "inr") {
+    return {
+      minorUnits: 5_000,
+      displayAmount: "₹50",
+    };
+  }
+
+  return {
+    minorUnits: 50,
+    displayAmount: "$0.50",
+  };
+}
+
 export function getStripeClient() {
   if (!env.STRIPE_SECRET_KEY) {
     throw new Error("STRIPE_SECRET_KEY is not configured");

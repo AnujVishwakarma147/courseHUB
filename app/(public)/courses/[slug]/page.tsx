@@ -36,12 +36,15 @@ export default async function SlugPage({
   params: Params;
   searchParams: SearchParams;
 }) {
-  const { slug } = await params;
-  const query = await searchParams;
-  const course = await getIndividualCourse(slug);
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const [{ slug }, query, requestHeaders] = await Promise.all([
+    params,
+    searchParams,
+    headers(),
+  ]);
+  const [course, session] = await Promise.all([
+    getIndividualCourse(slug),
+    auth.api.getSession({ headers: requestHeaders }),
+  ]);
   let enrollmentResult:
     | Awaited<ReturnType<typeof confirmStripeCheckoutAction>>
     | undefined;
@@ -54,12 +57,15 @@ export default async function SlugPage({
   }
 
   const isEnrolled = session?.user
-    ? await checkIfCourseBought(course.id)
+    ? await checkIfCourseBought(course.id, session.user.id)
     : false;
   const totalLessons = course.chapters.reduce(
     (total, chapter) => total + chapter.lessons.length,
     0,
   );
+  const firstLessonId = course.chapters
+    .flatMap((chapter) => chapter.lessons)
+    .at(0)?.id;
   const thumbnailUrl =
     `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}` +
     `/image/upload/${course.fileKey}`;
@@ -76,6 +82,7 @@ export default async function SlugPage({
           alt={course.title}
           width={1600}
           height={900}
+          sizes="(min-width: 1024px) 66vw, 100vw"
           priority
           className="aspect-video h-auto w-full rounded-md object-contain ring-1 ring-foreground/10"
         />
@@ -243,7 +250,11 @@ export default async function SlugPage({
 
           {isEnrolled ? (
             <Link
-              href="#course-content"
+              href={
+                firstLessonId
+                  ? `/dashboard/${course.slug}/${firstLessonId}`
+                  : `/dashboard/${course.slug}`
+              }
               className={buttonVariants({
                 size: "lg",
                 className:
