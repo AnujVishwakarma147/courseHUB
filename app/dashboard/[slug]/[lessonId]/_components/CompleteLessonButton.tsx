@@ -5,7 +5,6 @@ import { useCourseProgress } from "@/app/dashboard/_components/CourseProgressPro
 import { Button } from "@/components/ui/button";
 import confetti from "canvas-confetti";
 import { CheckCircle2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -20,30 +19,38 @@ export function CompleteLessonButton({
   initialCompleted,
   lessonId,
 }: CompleteLessonButtonProps) {
-  const router = useRouter();
   const courseProgress = useCourseProgress();
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
   const [pending, startTransition] = useTransition();
 
   function handleComplete() {
+    const completesCourse = Boolean(
+      courseProgress &&
+        courseProgress.totalLessons > 0 &&
+        !courseProgress.completedLessonIds.has(lessonId) &&
+        courseProgress.completedLessons + 1 >= courseProgress.totalLessons,
+    );
+
     startTransition(async () => {
       try {
         const result = await action();
 
         setIsCompleted(true);
         courseProgress?.markLessonCompleted(lessonId);
-        toast.success(result.message);
+        toast.success(
+          completesCourse
+            ? "Congratulations! You completed the course."
+            : result.message,
+        );
 
         if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           void confetti({
-            particleCount: 140,
-            spread: 90,
-            startVelocity: 38,
+            particleCount: completesCourse ? 240 : 140,
+            spread: completesCourse ? 120 : 90,
+            startVelocity: completesCourse ? 48 : 38,
             origin: { x: 0.55, y: 0.62 },
           });
         }
-
-        router.refresh();
       } catch {
         toast.error("Could not update lesson progress");
       }

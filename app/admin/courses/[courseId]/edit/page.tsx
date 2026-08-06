@@ -10,12 +10,24 @@ import { EditCourseForm } from "./_components/EditCourseForm";
 
 export default async function EditCoursePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ courseId: string }>;
+  searchParams: Promise<{
+    tab?: string | string[];
+    chapter?: string | string[];
+  }>;
 }) {
   await requireAdmin();
 
   const { courseId } = await params;
+  const query = await searchParams;
+  const requestedTab = Array.isArray(query.tab) ? query.tab[0] : query.tab;
+  const requestedChapter = Array.isArray(query.chapter)
+    ? query.chapter[0]
+    : query.chapter;
+  const initialTab =
+    requestedTab === "course-structure" ? "course-structure" : "basic-info";
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     select: {
@@ -51,13 +63,19 @@ export default async function EditCoursePage({
 
   if (!course) notFound();
 
+  const initialChapterId = course.chapters.some(
+    (chapter) => chapter.id === requestedChapter,
+  )
+    ? requestedChapter
+    : undefined;
+
   const imageUrl =
     `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}` +
     `/image/upload/${course.fileKey}`;
 
   return (
     <div className="space-y-5">
-      <Tabs defaultValue="basic-info" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="grid h-12 w-full grid-cols-2 rounded-none">
           <TabsTrigger value="basic-info" className="rounded-none text-base">
             Basic Info
@@ -93,6 +111,7 @@ export default async function EditCoursePage({
           <CourseStructure
             courseId={course.id}
             initialChapters={course.chapters}
+            initialChapterId={initialChapterId}
           />
         </TabsContent>
       </Tabs>

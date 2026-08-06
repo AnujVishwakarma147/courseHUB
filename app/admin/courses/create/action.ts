@@ -1,11 +1,11 @@
 "use server";
 
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { request } from "@arcjet/next";
 
 import arcjet from "@/lib/arcjet";
-import { auth } from "@/lib/auth";
+import { adminAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { ApiResponse } from "@/lib/types";
 import {
@@ -17,7 +17,7 @@ export async function CreateCourse(
   values: CourseSchemaType,
 ): Promise<ApiResponse> {
   try {
-    const session = await auth.api.getSession({
+    const session = await adminAuth.api.getSession({
       headers: await headers(),
     });
 
@@ -63,6 +63,8 @@ export async function CreateCourse(
     });
 
     revalidatePath("/admin/courses");
+    updateTag("published-courses");
+    updateTag("published-course-details");
 
     return {
       status: "success",

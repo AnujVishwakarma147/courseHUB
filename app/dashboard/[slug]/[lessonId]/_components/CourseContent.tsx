@@ -6,6 +6,7 @@ import { RenderDescription } from "@/components/rich-text-editor/RenderDescripti
 import { env } from "@/lib/env";
 import { BookOpen } from "lucide-react";
 import { CompleteLessonButton } from "./CompleteLessonButton";
+import { CourseCompletionCertificate } from "./CourseCompletionCertificate";
 
 type CourseContentProps = {
   data: CoursePlayerData;
@@ -57,21 +58,26 @@ export function CourseContent({ data }: CourseContentProps) {
         />
       </div>
 
-      <div className="mt-5 border-t pt-5">
-        <h2 className="text-4xl font-semibold tracking-tight">
-          {data.lesson.title}
-        </h2>
+      <CourseCompletionCertificate
+        courseTitle={data.course.title}
+        slug={data.course.slug}
+      >
+        <div className="mt-5 border-t pt-5">
+          <h2 className="text-4xl font-semibold tracking-tight">
+            {data.lesson.title}
+          </h2>
 
-        <div className="mt-5">
-          {data.lesson.description ? (
-            <RenderDescription content={data.lesson.description} />
-          ) : (
-            <p className="text-muted-foreground">
-              No description has been added for this lesson yet.
-            </p>
-          )}
+          <div className="mt-5">
+            {data.lesson.description ? (
+              <RenderDescription content={data.lesson.description} />
+            ) : (
+              <p className="text-muted-foreground">
+                No description has been added for this lesson yet.
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </CourseCompletionCertificate>
     </main>
   );
 }

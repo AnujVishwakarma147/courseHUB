@@ -1,16 +1,20 @@
 "use client";
 
-import type { CoursePlayerData } from "@/app/data/course/get-lesson-content";
+import type { CourseSidebarData } from "@/app/data/course/get-course-sidebar-data";
+import { buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ChevronDown, Play } from "lucide-react";
+import { ArrowLeft, ChevronDown, Play } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useCourseProgress } from "./CourseProgressProvider";
 import { LessonItem } from "./LessonIten";
 
 type CourseSidebarProps = {
-  data: CoursePlayerData;
+  data: CourseSidebarData;
 };
 
 export function CourseSidebar({ data }: CourseSidebarProps) {
+  const { lessonId: activeLessonId } = useParams<{ lessonId?: string }>();
   const courseProgress = useCourseProgress();
   const completedLessons =
     courseProgress?.completedLessons ?? data.completedLessons;
@@ -18,7 +22,18 @@ export function CourseSidebar({ data }: CourseSidebarProps) {
   const progress = courseProgress?.progress ?? data.progress;
 
   return (
-    <aside className="min-w-0 lg:border-r lg:pr-6">
+    <aside className="min-w-0 lg:pr-6">
+      <Link
+        href="/dashboard"
+        className={buttonVariants({
+          variant: "outline",
+          className: "mb-5 w-full rounded-none",
+        })}
+      >
+        <ArrowLeft className="size-4" />
+        Back to Dashboard
+      </Link>
+
       <div className="border-b pb-6">
         <div className="flex items-center gap-4">
           <span className="flex size-15 shrink-0 items-center justify-center bg-primary/10 text-primary">
@@ -52,7 +67,7 @@ export function CourseSidebar({ data }: CourseSidebarProps) {
       <div className="mt-6 space-y-4">
         {data.course.chapters.map((chapter, chapterIndex) => {
           const containsActiveLesson = chapter.lessons.some(
-            (lesson) => lesson.id === data.lesson.id,
+            (lesson) => lesson.id === activeLessonId,
           );
 
           return (
@@ -75,13 +90,13 @@ export function CourseSidebar({ data }: CourseSidebarProps) {
               </summary>
 
               {chapter.lessons.length > 0 ? (
-                <div className="ml-0 space-y-3 border-l-2 border-border py-3 pl-6">
+                <div className="ml-0 space-y-3 py-3 pl-6">
                   {chapter.lessons.map((lesson) => (
                     <LessonItem
                       key={lesson.id}
                       slug={data.course.slug}
                       lesson={lesson}
-                      isActive={lesson.id === data.lesson.id}
+                      isActive={lesson.id === activeLessonId}
                       isCompleted={
                         courseProgress?.completedLessonIds.has(lesson.id) ??
                         lesson.isCompleted

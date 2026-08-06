@@ -1,25 +1,28 @@
 import type { ReactNode } from "react";
-import { getSessionCookie } from "better-auth/cookies";
-import { headers } from "next/headers";
 
+import { LazyCourseAiWidget } from "@/components/ai/LazyCourseAiWidget";
+import { Footer } from "./_components/Footer";
 import { Navbar } from "./_components/Navbar";
+import { PublicSessionGate } from "./_components/PublicSessionGate";
 
 type PublicLayoutProps = {
   children: ReactNode;
 };
 
-export default async function PublicLayout({
+export default function PublicLayout({
   children,
 }: PublicLayoutProps) {
-  const hasSessionCookie = Boolean(getSessionCookie(await headers()));
-
   return (
-    <div className="min-h-screen overflow-x-clip lg:min-h-[125vh] lg:[zoom:0.8]">
-      <Navbar hasSessionCookie={hasSessionCookie} />
+    <PublicSessionGate>
+      <div className="flex min-h-screen flex-col overflow-x-clip">
+        <Navbar />
 
-      <main className="w-full px-4 md:px-6 lg:px-10">
-        {children}
-      </main>
-    </div>
+        <main className="w-full flex-1 px-4 md:px-6 lg:px-10">
+          {children}
+        </main>
+        <LazyCourseAiWidget />
+        <Footer />
+      </div>
+    </PublicSessionGate>
   );
 }

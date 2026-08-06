@@ -1,10 +1,12 @@
 import "server-only";
 
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 
-export async function getIndividualCourse(slug: string) {
-  const course = await prisma.course.findFirst({
+const getCachedIndividualCourse = unstable_cache(
+  async (slug: string) =>
+    prisma.course.findFirst({
     where: {
       slug,
       status: "Published",
@@ -42,7 +44,16 @@ export async function getIndividualCourse(slug: string) {
         },
       },
     },
-  });
+    }),
+  ["published-course-detail"],
+  {
+    revalidate: 300,
+    tags: ["published-course-details"],
+  },
+);
+
+export async function getIndividualCourse(slug: string) {
+  const course = await getCachedIndividualCourse(slug);
 
   if (!course) {
     return notFound();

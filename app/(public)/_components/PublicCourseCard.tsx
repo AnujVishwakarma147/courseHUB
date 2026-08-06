@@ -31,6 +31,7 @@ export function PublicCourseCard({ data, priority = false }: iAppProps) {
         height={400}
         sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
         priority={priority}
+        loading={priority ? "eager" : "lazy"}
         className="aspect-video w-full object-cover"
       />
 

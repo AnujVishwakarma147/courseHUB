@@ -1,19 +1,19 @@
 import "server-only";
 
 import arcjet from "@/lib/arcjet";
-import { auth } from "@/lib/auth";
+import { adminAuth } from "@/lib/auth";
 import { request } from "@arcjet/next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
 export const requireAdmin = cache(async () => {
-  const session = await auth.api.getSession({
+  const session = await adminAuth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
-    return redirect("/login");
+    return redirect("/login?callbackURL=%2Fadmin");
   }
 
   if (session.user.role !== "admin") {

@@ -1,4 +1,23 @@
 "use client";
+
+import Link from "next/link";
+import {
+  Loader2Icon,
+  MailIcon,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  type FormEvent,
+  useState,
+  useTransition,
+} from "react";
+import {
+  FaGithub,
+  FaGoogle,
+} from "react-icons/fa";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,121 +25,299 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FaGithub, FaGoogle } from "react-icons/fa";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
-import { Loader2, Send } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  adminAuthClient,
+  authClient,
+} from "@/lib/auth-client";
+import {
+  AUTH_MODE_HEADER,
+  isAdminCallbackURL,
+} from "@/lib/auth-flow";
 
-export function LoginForm() {
+type SocialProvider = "google" | "github";
+
+type LoginFormProps = {
+  callbackURL?: string;
+  initialError?: string;
+};
+
+export function LoginForm({
+  callbackURL = "/",
+  initialError,
+}: LoginFormProps) {
   const router = useRouter();
-  const [pendingProvider, setPendingProvider] = useState<"google" | "github" | null>(null);
-  const [emailPending, startEmailTransition] = useTransition();
-  const [email, setEmail] = useState("");
+  const isAdminLogin = isAdminCallbackURL(callbackURL);
+  const activeAuthClient = isAdminLogin
+    ? adminAuthClient
+    : authClient;
+  const errorCallbackURL = isAdminLogin
+    ? `/login?callbackURL=${encodeURIComponent(callbackURL)}`
+    : "/login";
 
-  async function signInWithSocial(provider: "google" | "github") {
+  const [email, setEmail] =
+    useState("");
+
+  const [
+    pendingProvider,
+    setPendingProvider,
+  ] = useState<SocialProvider | null>(
+    null,
+  );
+
+  const [
+    emailPending,
+    startEmailTransition,
+  ] = useTransition();
+
+  const socialPending =
+    pendingProvider !== null;
+
+  async function signInWithSocial(
+    provider: SocialProvider,
+  ) {
     setPendingProvider(provider);
+
     try {
-      await authClient.signIn.social({
+      await activeAuthClient.signIn.social({
         provider,
-        callbackURL: "/",
+
+        callbackURL,
+        errorCallbackURL,
+
         fetchOptions: {
-          onSuccess: () => {
-            toast.success(`Signing in with ${provider === "google" ? "Google" : "GitHub"}`);
+          headers: {
+            [AUTH_MODE_HEADER]: "login",
           },
-          onError: () => {
-            toast.error(
-              provider === "google"
-                ? "Google sign-in is unavailable. Check the Google OAuth credentials."
-                : "GitHub sign-in failed.",
+
+          onSuccess: () => {
+            toast.success(
+              `Continuing with ${
+                provider === "google"
+                  ? "Google"
+                  : "GitHub"
+              }`,
             );
+          },
+
+          onError: (context) => {
+            toast.error(
+              context.error.message ||
+                `${
+                  provider === "google"
+                    ? "Google"
+                    : "GitHub"
+                } login failed`,
+            );
+
+            setPendingProvider(null);
           },
         },
       });
-    } finally {
+    } catch {
+      toast.error(
+        "Social login failed. Please try again.",
+      );
+
       setPendingProvider(null);
     }
   }
 
-    function signInWithEmail() {
-      if (!email.trim()) {
-        toast.error("Please enter your email address");
-        return;
-      }
+  function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
 
-      startEmailTransition(async () => {
-        await authClient.emailOtp.sendVerificationOtp({
-          email: email.trim(),
-          type: "sign-in",
-          fetchOptions: {
-            onSuccess: () => {
-              toast.success("Email sent");
-              router.push(`/verify-request?email=${encodeURIComponent(email.trim())}`);
-            },
-            onError: () => {
-              toast.error("Error sending email");
-            },
-          },
-        });
-      });
+    const cleanEmail =
+      email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      toast.error(
+        "Please enter your email address",
+      );
+
+      return;
     }
 
-    return(
-        <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">Welcome back!</CardTitle>
-        <CardDescription>Sign in with Google, GitHub, or email</CardDescription>
+    startEmailTransition(async () => {
+      await activeAuthClient.emailOtp.sendVerificationOtp({
+        email: cleanEmail,
+        type: "sign-in",
+
+        fetchOptions: {
+          headers: {
+            [AUTH_MODE_HEADER]: "login",
+          },
+
+          onSuccess: () => {
+            toast.success(
+              "Login code sent to your email",
+            );
+
+            router.push(
+              `/verify-request?mode=login&email=${encodeURIComponent(
+                cleanEmail,
+              )}&callbackURL=${encodeURIComponent(callbackURL)}`,
+            );
+          },
+
+          onError: (context) => {
+            toast.error(
+              context.error.message ||
+                "Unable to send login code",
+            );
+          },
+        },
+      });
+    });
+  }
+
+  return (
+    <Card className="mx-auto w-full max-w-md rounded-2xl border-border/80 shadow-xl shadow-black/5">
+      <CardHeader className="space-y-2 pb-5">
+        <CardTitle className="text-2xl">
+          {isAdminLogin ? "Admin login" : "Welcome back!"}
+        </CardTitle>
+
+        <CardDescription className="text-sm leading-6">
+          {isAdminLogin
+            ? "Sign in with an admin account to continue."
+            : "Login with Google, GitHub or your email address."}
+        </CardDescription>
+
+        {initialError ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {initialError}
+          </p>
+        ) : null}
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-4">
+      <CardContent>
+        {/* Social login */}
         <div className="grid grid-cols-2 gap-3">
           <Button
-            disabled={pendingProvider !== null}
-            onClick={() => signInWithSocial("google")}
+            type="button"
             variant="outline"
+            className="h-11 rounded-xl"
+            disabled={
+              socialPending || emailPending
+            }
+            onClick={() =>
+              signInWithSocial("google")
+            }
           >
-            {pendingProvider === "google" ? <Loader2 className="size-4 animate-spin" /> : <FaGoogle className="size-4" />}
+            {pendingProvider === "google" ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : (
+              <FaGoogle className="size-4" />
+            )}
+
             Google
           </Button>
+
           <Button
-            disabled={pendingProvider !== null}
-            onClick={() => signInWithSocial("github")}
+            type="button"
             variant="outline"
+            className="h-11 rounded-xl"
+            disabled={
+              socialPending || emailPending
+            }
+            onClick={() =>
+              signInWithSocial("github")
+            }
           >
-            {pendingProvider === "github" ? <Loader2 className="size-4 animate-spin" /> : (
+            {pendingProvider === "github" ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : (
               <FaGithub className="size-4" />
             )}
+
             GitHub
           </Button>
         </div>
 
-        <div className="relative text-center text-sm after:absolute after:inset-0 after:top-0.5 after:z-0 after:flex after:items-center after:border-t after:border-border">
-          <span className="relative z-10 br-card px-2 text-muted-foreground">
-            Or continue with
-          </span>
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+
+          <div className="relative flex justify-center">
+            <span className="bg-card px-3 text-xs font-medium uppercase text-muted-foreground">
+              Or continue with email
+            </span>
+          </div>
         </div>
 
-        <div className="grid gap-3">
-          <div className="flex flex-col space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="name@example.com" />
+        {/* Email login */}
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+        >
+          <div className="space-y-2">
+            <Label htmlFor="login-email">
+              Email address
+            </Label>
+
+            <div className="relative">
+              <MailIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+              <Input
+                id="login-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="name@example.com"
+                value={email}
+                disabled={emailPending}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
+                className="h-11 rounded-xl pl-10"
+                required
+              />
+            </div>
           </div>
-          <Button onClick={signInWithEmail} disabled={emailPending}>{emailPending ?(<>
-            <Loader2 className="size-4 animate-spin" />
-            <span>Loading...</span>
-          </>):(
-            <>
-            <Send className="size-4" />
-            <span>Continue with Email</span>
-            </>
-          )}
+
+          <Button
+            type="submit"
+            className="h-11 w-full rounded-xl font-semibold"
+            disabled={
+              emailPending ||
+              socialPending ||
+              !email.trim()
+            }
+          >
+            {emailPending ? (
+              <>
+                <Loader2Icon className="size-4 animate-spin" />
+                Sending code...
+              </>
+            ) : (
+              <>
+                <MailIcon className="size-4" />
+                Continue with Email
+              </>
+            )}
           </Button>
-        </div>
+        </form>
+
+        {!isAdminLogin ? (
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="font-semibold text-primary transition-colors hover:text-primary/80 hover:underline"
+            >
+              Create account
+            </Link>
+          </p>
+        ) : null}
       </CardContent>
     </Card>
-    )
+  );
 }

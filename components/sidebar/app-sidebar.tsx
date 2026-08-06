@@ -1,10 +1,22 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+import Link from "next/link";
+import {
+  BookMarkedIcon,
+  BookOpenIcon,
+  FolderKanbanIcon,
+  GraduationCapIcon,
+  LayoutDashboardIcon,
+  SearchIcon,
+  UsersIcon,
+} from "lucide-react";
 
-import { NavMain } from "@/components/sidebar/nav-main"
-import { NavSecondary } from "@/components/sidebar/nav-secondary"
-import { NavUser } from "@/components/sidebar/nav-user"
+import { NavMain } from "@/components/sidebar/nav-main";
+import {
+  NavUser,
+  type NavigationUser,
+} from "@/components/sidebar/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -13,112 +25,83 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, BookOpenIcon, ChartBarIcon, FolderIcon, UsersIcon, Settings2Icon, CircleHelpIcon, SearchIcon, BookMarkedIcon } from "lucide-react"
+} from "@/components/ui/sidebar";
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
       url: "/admin",
-      icon: (
-        <LayoutDashboardIcon
-        />
-      ),
+      icon: <LayoutDashboardIcon />,
     },
     {
       title: "Courses",
       url: "/admin/courses",
-      icon: (
-        <BookOpenIcon
-        />
-      ),
-    },
-    {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: (
-        <ChartBarIcon
-        />
-      ),
+      icon: <BookOpenIcon />,
     },
     {
       title: "Projects",
       url: "/admin/projects",
-      icon: (
-        <FolderIcon
-        />
-      ),
+      icon: <FolderKanbanIcon />,
     },
     {
       title: "Team",
       url: "/admin/team",
-      icon: (
-        <UsersIcon
-        />
-      ),
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: (
-        <Settings2Icon
-        />
-      ),
+      icon: <UsersIcon />,
     },
     {
-      title: "Get Help",
-      url: "#",
-      icon: (
-        <CircleHelpIcon
-        />
-      ),
+      title: "Students",
+      url: "/admin/students",
+      icon: <GraduationCapIcon />,
     },
     {
       title: "Search",
-      url: "#",
-      icon: (
-        <SearchIcon
-        />
-      ),
+      url: "/admin/search",
+      icon: <SearchIcon />,
     },
   ],
-}
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+};
+
+type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  initialUser: NavigationUser;
+};
+
+export function AppSidebar({
+  initialUser,
+  ...props
+}: AppSidebarProps) {
   return (
     <Sidebar
       collapsible="offcanvas"
       {...props}
     >
+      {/* Logo */}
       <SidebarHeader className="px-5 pb-3 pt-5">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-12 gap-3 rounded-none px-2 text-sidebar-foreground hover:bg-transparent"
-              render={<a href="#" />}
+              render={<Link href="/admin" />}
+              className="h-12 gap-3 rounded-lg px-2 text-sidebar-foreground hover:bg-sidebar-accent"
             >
-              <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <BookMarkedIcon className="size-4!" />
+              <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <BookMarkedIcon className="size-5" />
               </span>
-              <span className="text-xl font-semibold tracking-tight">CourseHub.</span>
+
+              <span className="text-xl font-semibold tracking-tight">
+                CourseHub.
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
+
       <SidebarFooter>
-        <NavUser />
+        <NavUser authMode="admin" initialUser={initialUser} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

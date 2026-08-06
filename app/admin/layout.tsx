@@ -1,18 +1,26 @@
-import { AppSidebar } from "@/components/sidebar/app-sidebar"
-import { SiteHeader } from "@/components/sidebar/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { requireAdmin } from "@/app/data/admin/require-admin"
+import { requireAdmin } from "@/app/data/admin/require-admin";
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { SiteHeader } from "@/components/sidebar/site-header";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
 
 export default async function AdminLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
-}>){
-    await requireAdmin()
+  children: React.ReactNode;
+}>) {
+  const session = await requireAdmin();
+  const initialUser = {
+    name: session.user.name,
+    email: session.user.email,
+    image: session.user.image,
+  };
 
-    return(
-         <SidebarProvider
-      className="admin-shell dark"
+  return (
+    <SidebarProvider
+      className="admin-shell"
       style={
         {
           "--sidebar-width": "calc(var(--spacing) * 88)",
@@ -20,7 +28,7 @@ export default async function AdminLayout({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar initialUser={initialUser} variant="inset" />
       <SidebarInset className="min-w-0 md:peer-data-[variant=inset]:rounded-md">
         <SiteHeader />
         <div className="flex flex-1 flex-col overflow-x-hidden">
@@ -32,5 +40,5 @@ export default async function AdminLayout({
         </div>
       </SidebarInset>
     </SidebarProvider>
-    )
+  );
 }

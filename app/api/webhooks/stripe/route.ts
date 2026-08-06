@@ -3,13 +3,10 @@ import { env } from "@/lib/env";
 import { getStripeClient } from "@/lib/stripe";
 import type Stripe from "stripe";
 
-export function GET(request: Request) {
+export function GET() {
   return Response.json({
     status: "ready",
-    message:
-      "Stripe webhook endpoint is ready. Stripe sends signed POST requests to this URL.",
-    webhookUrl: request.url,
-    signingSecretConfigured: Boolean(env.STRIPE_WEBHOOK_SECRET),
+    message: "Stripe webhook endpoint is ready for signed POST requests.",
   });
 }
 

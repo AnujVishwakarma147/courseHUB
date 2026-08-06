@@ -1,6 +1,10 @@
+import "server-only";
+
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@/lib/db";
 
-export async function getAllCourses() {
+const getCachedCourses = unstable_cache(async () => {
   const data = await prisma.course.findMany({
     where: {
       status: "Published",
@@ -8,7 +12,6 @@ export async function getAllCourses() {
     orderBy: {
       createdAt: "desc",
     },
-    take: 2,
     select: {
       title: true,
       price: true,
@@ -23,6 +26,13 @@ export async function getAllCourses() {
   });
 
   return data;
+}, ["published-courses"], {
+  revalidate: 300,
+  tags: ["published-courses"],
+});
+
+export async function getAllCourses() {
+  return getCachedCourses();
 }
 
 export type PublicCourseType = Awaited<ReturnType<typeof getAllCourses>>[0];

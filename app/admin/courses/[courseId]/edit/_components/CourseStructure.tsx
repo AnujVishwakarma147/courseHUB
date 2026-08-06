@@ -23,7 +23,7 @@ import {
   GripVertical,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 
 import {
@@ -57,6 +57,7 @@ export interface CourseStructureChapter {
 interface CourseStructureProps {
   courseId: string;
   initialChapters: CourseStructureChapter[];
+  initialChapterId?: string;
 }
 
 const chapterDndId = (id: string) => `chapter:${id}`;
@@ -65,6 +66,7 @@ const lessonDndId = (id: string) => `lesson:${id}`;
 export function CourseStructure({
   courseId,
   initialChapters,
+  initialChapterId,
 }: CourseStructureProps) {
   const [chapters, setChapters] = useState(initialChapters);
   const [isBusy, setIsBusy] = useState(false);
@@ -76,6 +78,18 @@ export function CourseStructure({
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
+  useEffect(() => {
+    if (!initialChapterId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById(`chapter-${initialChapterId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialChapterId]);
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -290,6 +304,10 @@ export function CourseStructure({
                       courseId={courseId}
                       chapter={chapter}
                       chapterNumber={chapterIndex + 1}
+                      isTargetChapter={chapter.id === initialChapterId}
+                      initiallyOpen={
+                        !initialChapterId || chapter.id === initialChapterId
+                      }
                       disabled={isBusy}
                       onCreateLesson={(lesson) =>
                         handleCreateLesson(chapter.id, lesson)
@@ -315,6 +333,8 @@ interface SortableChapterProps {
   courseId: string;
   chapter: CourseStructureChapter;
   chapterNumber: number;
+  isTargetChapter: boolean;
+  initiallyOpen: boolean;
   disabled: boolean;
   onCreateLesson: (lesson: CourseStructureLesson) => void;
   onDeleteChapter: () => void;
@@ -326,13 +346,15 @@ function SortableChapter({
   courseId,
   chapter,
   chapterNumber,
+  isTargetChapter,
+  initiallyOpen,
   disabled,
   onCreateLesson,
   onDeleteChapter,
   onDeleteLesson,
   onPendingChange,
 }: SortableChapterProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
   const {
     attributes,
     listeners,
@@ -352,10 +374,12 @@ function SortableChapter({
 
   return (
     <section
+      id={`chapter-${chapter.id}`}
       ref={setNodeRef}
       style={style}
       className={cn(
-        "overflow-hidden rounded-xl border bg-card",
+        "scroll-mt-24 overflow-hidden rounded-xl border bg-card",
+        isTargetChapter && "ring-2 ring-primary/50 ring-offset-2",
         isDragging && "relative z-20 opacity-70 shadow-xl",
       )}
     >

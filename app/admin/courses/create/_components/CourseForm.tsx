@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfetti } from "@/hooks/use-confetti";
+import { COURSES_UPDATED_STORAGE_KEY } from "@/lib/course-refresh";
 import {
   courseCategories,
   courseLevels,
@@ -135,6 +136,11 @@ export function CourseForm({
       if (mode === "create") {
         triggerConfetti();
       }
+
+      window.localStorage.setItem(
+        COURSES_UPDATED_STORAGE_KEY,
+        Date.now().toString(),
+      );
 
       router.push("/admin/courses");
       router.refresh();

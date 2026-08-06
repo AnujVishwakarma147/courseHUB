@@ -33,6 +33,7 @@ interface UploaderProps {
   value?: string;
   initialPreviewUrl?: string;
   onChange: (key: string) => void;
+  onBusyChange?: (busy: boolean) => void;
   mediaType?: "image" | "video";
 }
 
@@ -52,6 +53,7 @@ export function Uploader({
   value,
   initialPreviewUrl,
   onChange,
+  onBusyChange,
   mediaType = "image",
 }: UploaderProps) {
   const isVideo = mediaType === "video";
@@ -62,6 +64,11 @@ export function Uploader({
     key: value || undefined,
     objectUrl: initialPreviewUrl,
   });
+  const isBusy = fileState.uploading || fileState.isDeleting;
+
+  useEffect(() => {
+    onBusyChange?.(isBusy);
+  }, [isBusy, onBusyChange]);
 
   useEffect(() => {
     return () => {

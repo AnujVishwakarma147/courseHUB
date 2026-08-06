@@ -3,12 +3,12 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import arcjet from "@/lib/arcjet";
-import { auth } from "@/lib/auth";
+import { adminAuth } from "@/lib/auth";
 import { env } from "@/lib/env";
 
 export async function DELETE(request: Request) {
   try {
-    const session = await auth.api.getSession({
+    const session = await adminAuth.api.getSession({
       headers: await headers(),
     });
 

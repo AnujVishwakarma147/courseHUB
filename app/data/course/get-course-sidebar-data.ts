@@ -7,9 +7,6 @@ import { redirect } from "next/navigation";
 export type PlayerLesson = {
   id: string;
   title: string;
-  description: string | null;
-  thumbnailKey: string | null;
-  videoKey: string | null;
   position: number;
   isCompleted: boolean;
 };
@@ -69,9 +66,6 @@ export async function getCourseSidebarData(
             select: {
               id: true,
               title: true,
-              description: true,
-              thumbnailKey: true,
-              videoKey: true,
               position: true,
             },
           },

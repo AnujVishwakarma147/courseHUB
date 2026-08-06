@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import arcjet from "@/lib/arcjet";
-import { auth } from "@/lib/auth";
+import { adminAuth } from "@/lib/auth";
 import { env } from "@/lib/env";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -22,7 +22,7 @@ const allowedVideoTypes = new Map([
 ]);
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({
+  const session = await adminAuth.api.getSession({
     headers: await headers(),
   });
 

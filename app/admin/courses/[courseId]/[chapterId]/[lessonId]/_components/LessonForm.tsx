@@ -51,6 +51,10 @@ export function LessonForm({
   });
   const [titleError, setTitleError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isThumbnailBusy, setIsThumbnailBusy] = useState(false);
+  const [isVideoBusy, setIsVideoBusy] = useState(false);
+  const hasRequiredMedia = Boolean(values.thumbnailKey && values.videoKey);
+  const isMediaBusy = isThumbnailBusy || isVideoBusy;
 
   function setValue<Key extends keyof LessonValues>(
     key: Key,
@@ -65,6 +69,11 @@ export function LessonForm({
 
     if (values.title.trim().length < 3) {
       setTitleError("Lesson name must be at least 3 characters");
+      return;
+    }
+
+    if (isMediaBusy || !hasRequiredMedia) {
+      toast.error("Upload the thumbnail image and video before saving");
       return;
     }
 
@@ -87,7 +96,9 @@ export function LessonForm({
       }
 
       toast.success(response.message);
-      router.refresh();
+      router.push(
+        `/admin/courses/${courseId}/edit?tab=course-structure&chapter=${encodeURIComponent(chapterId)}`,
+      );
     } catch {
       toast.error("Could not update the lesson");
     } finally {
@@ -144,6 +155,7 @@ export function LessonForm({
                 value={values.thumbnailKey}
                 initialPreviewUrl={initialThumbnailUrl}
                 mediaType="image"
+                onBusyChange={setIsThumbnailBusy}
                 onChange={(thumbnailKey) =>
                   setValue("thumbnailKey", thumbnailKey)
                 }
@@ -155,13 +167,14 @@ export function LessonForm({
                 value={values.videoKey}
                 initialPreviewUrl={initialVideoUrl}
                 mediaType="video"
+                onBusyChange={setIsVideoBusy}
                 onChange={(videoKey) => setValue("videoKey", videoKey)}
               />
             </FormField>
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isMediaBusy || !hasRequiredMedia}
               className="h-12 rounded-none px-7 text-base"
             >
               {isSubmitting ? (

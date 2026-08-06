@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { env } from "@/lib/env";
+import { Award } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -78,15 +79,35 @@ export function CourseProgressCard({
           </p>
         </div>
 
-        <Link
-          href={`/dashboard/${course.slug}`}
-          className={buttonVariants({
-            size: "lg",
-            className: "mt-6 h-13 w-full rounded-none text-base",
-          })}
+        <div
+          className={`mt-6 grid gap-3 ${
+            progressPercentage === 100 ? "sm:grid-cols-2" : ""
+          }`}
         >
-          Learn More
-        </Link>
+          <Link
+            href={`/dashboard/${course.slug}`}
+            className={buttonVariants({
+              size: "lg",
+              variant: progressPercentage === 100 ? "outline" : "default",
+              className: "h-13 w-full rounded-none text-base",
+            })}
+          >
+            {progressPercentage === 100 ? "Review Course" : "Learn More"}
+          </Link>
+
+          {progressPercentage === 100 ? (
+            <Link
+              href={`/dashboard/${course.slug}/certificate`}
+              className={buttonVariants({
+                size: "lg",
+                className: "h-13 w-full rounded-none text-base",
+              })}
+            >
+              <Award className="size-4" />
+              View Certificate
+            </Link>
+          ) : null}
+        </div>
       </CardContent>
     </Card>
   );

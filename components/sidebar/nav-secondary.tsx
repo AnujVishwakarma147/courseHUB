@@ -1,6 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import {
   SidebarGroup,
@@ -8,18 +10,27 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+
+interface SecondaryNavigationItem {
+  title: string;
+  url: string;
+  icon: React.ReactNode;
+}
+
+interface NavSecondaryProps
+  extends React.ComponentPropsWithoutRef<
+    typeof SidebarGroup
+  > {
+  items: SecondaryNavigationItem[];
+}
 
 export function NavSecondary({
   items,
   ...props
-}: {
-  items: {
-    title: string
-    url: string
-    icon: React.ReactNode
-  }[]
-} & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+}: NavSecondaryProps) {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
@@ -27,10 +38,13 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                render={<a href={item.url} />}
-                className="h-11 rounded-none px-4 text-base"
+                tooltip={item.title}
+                render={<Link href={item.url} />}
+                isActive={pathname.startsWith(item.url)}
+                className="h-11 rounded-lg px-4 text-base"
               >
                 {item.icon}
+
                 <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -38,5 +52,5 @@ export function NavSecondary({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }

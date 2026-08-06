@@ -75,8 +75,8 @@ export default async function SlugPage({
   }).format(course.price);
 
   return (
-    <div className="grid grid-cols-1 gap-8 py-6 lg:grid-cols-3 lg:gap-10">
-      <article className="min-w-0 lg:col-span-2">
+    <div className="grid grid-cols-1 gap-8 py-6 lg:grid-cols-[minmax(0,2fr)_minmax(20rem,0.9fr)] lg:gap-8">
+      <article className="min-w-0">
         <Image
           src={thumbnailUrl}
           alt={course.title}
@@ -195,17 +195,19 @@ export default async function SlugPage({
         </section>
       </article>
 
-      <aside className="min-w-0 lg:w-full lg:self-start">
-        <Card className="gap-0 p-6 lg:fixed lg:top-[104px] lg:w-[calc((100vw-10rem)/3)]">
+      <aside className="min-w-0 lg:w-full">
+        <Card className="gap-0 p-4 sm:p-5 lg:sticky lg:top-24 xl:p-6">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-xl font-semibold">Price:</h2>
-            <p className="text-2xl font-bold text-primary">{formattedPrice}</p>
+            <p className="text-right text-2xl font-bold tabular-nums text-primary">
+              {formattedPrice}
+            </p>
           </div>
 
-          <div className="mt-8 bg-muted/60 p-5">
+          <div className="mt-6 bg-muted/60 p-4">
             <h3 className="text-lg font-semibold">What you will get:</h3>
 
-            <div className="mt-5 space-y-5">
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
               <CourseFact
                 icon={<Clock3 />}
                 label="Course Duration"
@@ -229,9 +231,9 @@ export default async function SlugPage({
             </div>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-6">
             <h3 className="text-lg font-medium">This course includes:</h3>
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-2">
               <IncludedItem text="Full lifetime access" />
               <IncludedItem text="Access on mobile and desktop" />
               <IncludedItem text="Certificate of completion" />
@@ -239,11 +241,11 @@ export default async function SlugPage({
           </div>
 
           {enrollmentResult?.status === "error" ? (
-            <p className="mt-8 border border-destructive/40 bg-destructive/10 p-3 text-center text-sm text-destructive">
+            <p className="mt-6 border border-destructive/40 bg-destructive/10 p-3 text-center text-sm text-destructive">
               {enrollmentResult.message}
             </p>
           ) : query.enrolled === "true" ? (
-            <p className="mt-8 border border-emerald-500/40 bg-emerald-500/10 p-3 text-center text-sm text-emerald-500">
+            <p className="mt-6 border border-emerald-500/40 bg-emerald-500/10 p-3 text-center text-sm text-emerald-500">
               You are now enrolled in this course.
             </p>
           ) : null}
@@ -258,7 +260,7 @@ export default async function SlugPage({
               className={buttonVariants({
                 size: "lg",
                 className:
-                  "mt-8 h-12 w-full gap-2 rounded-none text-base",
+                  "mt-6 h-11 w-full gap-2 rounded-none text-base",
               })}
             >
               <Play className="size-4 fill-current" />
@@ -271,14 +273,14 @@ export default async function SlugPage({
               href="/login"
               className={buttonVariants({
                 size: "lg",
-                className: "mt-8 h-12 w-full rounded-none text-base",
+                className: "mt-6 h-11 w-full rounded-none text-base",
               })}
             >
               Sign in to Enroll
             </Link>
           )}
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-3 text-center text-sm text-muted-foreground">
             30-day money-back guarantee
           </p>
         </Card>
@@ -297,11 +299,11 @@ function CourseFact({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-4">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary [&_svg]:size-5">
+    <div className="flex min-w-0 items-center gap-3">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary [&_svg]:size-4.5">
         {icon}
       </span>
-      <span>
+      <span className="min-w-0">
         <span className="block font-medium">{label}</span>
         <span className="mt-0.5 block text-sm text-muted-foreground">
           {value}

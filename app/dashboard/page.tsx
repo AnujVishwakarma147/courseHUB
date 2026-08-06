@@ -4,7 +4,10 @@ import {
 } from "@/app/(public)/_components/PublicCourseCard";
 import { CourseProgressCard } from "@/app/dashboard/_components/CourseProgressCard";
 import { EmptyState } from "@/components/general/EmptyState";
+import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { cache, Suspense } from "react";
 import { getAllCourses } from "../data/course/get-all-courses";
 import { getEnrolledCourses } from "../data/user/get-enrolled-courses";
@@ -16,6 +19,17 @@ export default function DashboardPage() {
 
   return (
     <main className="px-5 py-8 lg:px-9 lg:py-10">
+      <Link
+        href="/"
+        className={buttonVariants({
+          variant: "outline",
+          className: "mb-6 rounded-none",
+        })}
+      >
+        <ArrowLeft className="size-4" />
+        Back to Home
+      </Link>
+
       <div className="flex flex-col gap-3">
         <h1 className="text-4xl font-bold tracking-tight">Enrolled Courses</h1>
         <p className="text-lg text-muted-foreground">

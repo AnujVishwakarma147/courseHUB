@@ -1,4 +1,9 @@
 import { auth } from "@/lib/auth";
+import {
+  AUTH_MODE_HEADER,
+  isAuthMode,
+} from "@/lib/auth-flow";
+import { prisma } from "@/lib/db";
 import ip from "@arcjet/ip";
 import arcjet, {
   type ArcjetDecision,
@@ -45,25 +50,19 @@ const signupOptions = {
   rateLimit: rateLimitOptions,
 } satisfies ProtectSignupOptions<[]>;
 
-async function protect(req: NextRequest): Promise<ArcjetDecision> {
-  const session = await auth.api.getSession({
-    headers: req.headers,
-  });
-
-  let userId: string;
-  if (session?.user?.id) {
-    userId = session.user.id;
-  } else {
-    userId = ip(req) || "127.0.0.1"; 
-  }
-
- 
-  let body: unknown = {};
+async function readBody(req: NextRequest): Promise<unknown> {
   try {
-    body = await req.clone().json();
+    return await req.clone().json();
   } catch {
-    // Body might be empty
+    return {};
   }
+}
+
+async function protect(
+  req: NextRequest,
+  body: unknown,
+): Promise<ArcjetDecision> {
+  const fingerprint = ip(req) || "127.0.0.1";
 
   if (
     typeof body === "object" &&
@@ -73,23 +72,98 @@ async function protect(req: NextRequest): Promise<ArcjetDecision> {
   ) {
     return aj
       .withRule(protectSignup(signupOptions))
-      .protect(req, { email: body.email, fingerprint: userId });
+      .protect(req, { email: body.email, fingerprint });
   } else if (req.method === "POST") {
-   
     return aj
       .withRule(detectBot(botOptions))
       .withRule(slidingWindow(rateLimitOptions))
-      .protect(req, { fingerprint: userId });
+      .protect(req, { fingerprint });
   } else {
-    // For all other auth requests
     return aj
       .withRule(detectBot(botOptions))
-      .protect(req, { fingerprint: userId });
+      .protect(req, { fingerprint });
   }
 }
 
+function getEmail(body: unknown) {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("email" in body) ||
+    typeof body.email !== "string"
+  ) {
+    return null;
+  }
+
+  return body.email.trim().toLowerCase();
+}
+
+function isSignInOtpRequest(req: NextRequest, body: unknown) {
+  const path = req.nextUrl.pathname;
+
+  if (path.endsWith("/sign-in/email-otp")) {
+    return true;
+  }
+
+  return (
+    path.endsWith("/email-otp/send-verification-otp") &&
+    typeof body === "object" &&
+    body !== null &&
+    "type" in body &&
+    body.type === "sign-in"
+  );
+}
+
+async function guardEmailOtpFlow(req: NextRequest, body: unknown) {
+  if (!isSignInOtpRequest(req, body)) {
+    return null;
+  }
+
+  const mode = req.headers.get(AUTH_MODE_HEADER);
+  const email = getEmail(body);
+
+  if (!isAuthMode(mode) || !email) {
+    return Response.json(
+      { message: "Please start again from the login or sign-up page." },
+      { status: 400 },
+    );
+  }
+
+  const account = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (mode === "login" && !account) {
+    return Response.json(
+      {
+        message:
+          "No account found with this email. Please create an account first.",
+      },
+      { status: 404 },
+    );
+  }
+
+  if (mode === "signup" && account) {
+    return Response.json(
+      {
+        message:
+          "An account with this email already exists. Please login instead.",
+      },
+      { status: 409 },
+    );
+  }
+
+  return null;
+}
+
 export const POST = async (req: NextRequest) => {
-  const decision = await protect(req);
+  if (req.nextUrl.pathname.endsWith("/sign-out")) {
+    return authHandlers.POST(req);
+  }
+
+  const body = await readBody(req);
+  const decision = await protect(req, body);
 
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
@@ -118,7 +192,11 @@ export const POST = async (req: NextRequest) => {
     }
   }
 
-  
+  const emailOtpError = await guardEmailOtpFlow(req, body);
+  if (emailOtpError) {
+    return emailOtpError;
+  }
+
   return authHandlers.POST(req);
 };
 

@@ -11,7 +11,11 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 
 export type CoursePlayerData = CourseSidebarData & {
-  lesson: PlayerLesson;
+  lesson: PlayerLesson & {
+    description: string | null;
+    thumbnailKey: string | null;
+    videoKey: string | null;
+  };
   nextLessonId: string | null;
 };
 
@@ -24,19 +28,34 @@ export async function getLessonContent(
   slug: string,
   lessonId: string,
 ): Promise<CoursePlayerData> {
-  const sidebarData = await getCourseSidebarData(slug);
+  const [sidebarData, lessonContent] = await Promise.all([
+    getCourseSidebarData(slug),
+    prisma.lesson.findUnique({
+      where: {
+        id: lessonId,
+      },
+      select: {
+        description: true,
+        thumbnailKey: true,
+        videoKey: true,
+      },
+    }),
+  ]);
   const lessons = sidebarData.course.chapters.flatMap(
     (chapter) => chapter.lessons,
   );
   const lessonIndex = lessons.findIndex((lesson) => lesson.id === lessonId);
 
-  if (lessonIndex === -1) {
+  if (lessonIndex === -1 || !lessonContent) {
     notFound();
   }
 
   return {
     ...sidebarData,
-    lesson: lessons[lessonIndex],
+    lesson: {
+      ...lessons[lessonIndex],
+      ...lessonContent,
+    },
     nextLessonId: lessons[lessonIndex + 1]?.id ?? null,
   };
 }

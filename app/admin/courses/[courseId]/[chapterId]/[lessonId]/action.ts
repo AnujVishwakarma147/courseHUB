@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/app/data/admin/require-admin";
@@ -20,8 +20,12 @@ const updateLessonSchema = z.object({
     .string()
     .trim()
     .max(20_000, "Description is too long"),
-  thumbnailKey: z.string().trim().max(500),
-  videoKey: z.string().trim().max(500),
+  thumbnailKey: z
+    .string()
+    .trim()
+    .min(1, "Thumbnail image is required")
+    .max(500),
+  videoKey: z.string().trim().min(1, "Video is required").max(500),
 });
 
 export type UpdateLessonValues = z.infer<typeof updateLessonSchema>;
@@ -70,6 +74,7 @@ export async function updateLesson(
     revalidatePath(
       `/admin/courses/${input.data.courseId}/${input.data.chapterId}/${input.data.lessonId}`,
     );
+    revalidateTag("published-course-details", "max");
 
     return {
       status: "success",

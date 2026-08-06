@@ -1,9 +1,10 @@
 import arcjet, {
   shield,
 } from "@arcjet/next";
+import { env } from "./env";
 
 export default arcjet({
-  key: process.env.ARCJET_KEY!,
+  key: env.ARCJET_KEY,
   characteristics: ["fingerprint"],
 
   rules: [

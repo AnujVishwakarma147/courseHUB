@@ -1,26 +1,37 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import {
+  adminAuthClient,
+  authClient,
+} from "@/lib/auth-client";
 import { toast } from "sonner";
 
-export function useSignOut() {
-  const router = useRouter();
+export function useSignOut(authMode: "user" | "admin" = "user") {
+  const activeAuthClient = authMode === "admin"
+    ? adminAuthClient
+    : authClient;
 
   const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("Signed out successfully");
-          router.push("/");
-          router.refresh();
-        },
+    const toastId = toast.loading("Signing out...");
 
-        onError: () => {
-          toast.error("Failed to sign out");
-        },
-      },
-    });
+    try {
+      const result = await activeAuthClient.signOut();
+
+      if (result.error) {
+        toast.error("Failed to sign out", { id: toastId });
+        return;
+      }
+
+      toast.success("Signed out successfully", { id: toastId });
+
+      window.location.replace(
+        authMode === "admin"
+          ? "/login?callbackURL=%2Fadmin"
+          : "/",
+      );
+    } catch {
+      toast.error("Failed to sign out", { id: toastId });
+    }
   };
 
   return handleSignOut;

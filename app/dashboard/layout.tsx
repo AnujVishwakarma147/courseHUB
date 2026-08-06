@@ -8,7 +8,12 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await requireUser();
+  const user = await requireUser();
+  const initialUser = {
+    name: user.name,
+    email: user.email,
+    image: user.image,
+  };
 
   return (
     <SidebarProvider
@@ -20,7 +25,7 @@ export default async function DashboardLayout({
         } as React.CSSProperties
       }
     >
-      <DashboardAppSidebar variant="inset" />
+      <DashboardAppSidebar initialUser={initialUser} variant="inset" />
       <SidebarInset className="min-w-0 md:peer-data-[variant=inset]:rounded-md">
         <SiteHeader />
         <div className="flex flex-1 flex-col overflow-x-hidden">

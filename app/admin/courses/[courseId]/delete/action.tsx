@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/app/data/admin/require-admin";
@@ -33,6 +33,8 @@ export async function deleteCourse(
     });
 
     revalidatePath("/admin/courses");
+    updateTag("published-courses");
+    updateTag("published-course-details");
 
     return {
       status: "success",

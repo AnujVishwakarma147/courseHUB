@@ -2,12 +2,12 @@
 
 import { request } from "@arcjet/next";
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, updateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet from "@/lib/arcjet";
-import { auth } from "@/lib/auth";
+import { adminAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/lib/generated/prisma/client";
 import type { ApiResponse } from "@/lib/types";
@@ -25,7 +25,7 @@ export async function UpdateCourse(
   values: CourseSchemaType,
 ): Promise<ApiResponse> {
   try {
-    const session = await auth.api.getSession({
+    const session = await adminAuth.api.getSession({
       headers: await headers(),
     });
 
@@ -65,6 +65,8 @@ export async function UpdateCourse(
 
     revalidatePath("/admin/courses");
     revalidatePath(`/admin/courses/${courseId}/edit`);
+    updateTag("published-courses");
+    updateTag("published-course-details");
 
     return {
       status: "success",
@@ -137,6 +139,8 @@ export async function reorderChapters(
       }
     }
 
+    revalidateTag("published-course-details", "max");
+
     return { status: "success", message: "Chapter order saved" };
   } catch (error) {
     console.error("Failed to reorder chapters:", error);
@@ -197,6 +201,8 @@ export async function reorderLessons(
         return { status: "error", message: "Could not save lesson order" };
       }
     }
+
+    revalidateTag("published-course-details", "max");
 
     return { status: "success", message: "Lesson order saved" };
   } catch (error) {
@@ -274,6 +280,7 @@ export async function createChapter(
     }
 
     revalidatePath(`/admin/courses/${result.data.courseId}/edit`);
+    revalidateTag("published-course-details", "max");
 
     return {
       status: "success",
@@ -370,6 +377,7 @@ export async function createLesson(
     }
 
     revalidatePath(`/admin/courses/${result.data.courseId}/edit`);
+    revalidateTag("published-course-details", "max");
 
     return {
       status: "success",
@@ -457,6 +465,7 @@ export async function deleteLesson(
     });
 
     revalidatePath(`/admin/courses/${input.courseId}/edit`);
+    revalidateTag("published-course-details", "max");
 
     return {
       status: "success",
@@ -529,6 +538,7 @@ export async function deleteChapter(
     });
 
     revalidatePath(`/admin/courses/${input.courseId}/edit`);
+    revalidateTag("published-course-details", "max");
 
     return {
       status: "success",

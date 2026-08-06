@@ -5,10 +5,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@import "tailwindcss";
-
-@custom-variant dark (&:is(.dark *));
-
 :root {
   --background: oklch(0.9818 0.0054 95.0986);
   --foreground: oklch(0.3438 0.0269 95.7226);
@@ -24,7 +20,7 @@
   --muted-foreground: oklch(0.6059 0.0075 97.4233);
   --accent: oklch(0.9245 0.0138 92.9892);
   --accent-foreground: oklch(0.2671 0.0196 98.9390);
-  --destructive: oklch(0.1908 0.0020 106.5859);
+  --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1.0000 0 0);
   --border: oklch(0.8847 0.0069 97.3627);
   --input: oklch(0.7621 0.0156 98.3528);
@@ -174,24 +170,25 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-screen bg-background text-foreground;
   }
-}
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
 @layer components {
-  .admin-shell {
+  .dark .admin-shell {
     --background: oklch(0.225 0.004 70);
     --foreground: oklch(0.89 0.008 90);
     --card: oklch(0.245 0.004 70);
@@ -217,5 +214,39 @@
     --sidebar-accent: oklch(0.24 0.004 70);
     --sidebar-accent-foreground: oklch(0.86 0.004 90);
     --sidebar-border: oklch(0.28 0.006 65);
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  body:has(.course-certificate-print) * {
+    visibility: hidden !important;
+  }
+
+  body:has(.course-certificate-print) .course-certificate-print,
+  body:has(.course-certificate-print) .course-certificate-print * {
+    visibility: visible !important;
+  }
+
+  body:has(.course-certificate-print) .course-certificate-print {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    box-sizing: border-box;
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
+    margin: 0 !important;
+    padding: 8mm !important;
+    border-width: 0.75mm !important;
+    box-shadow: none !important;
+    color: #1c1917 !important;
+    background: #ffffff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }

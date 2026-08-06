@@ -40,7 +40,7 @@ export function EnrollmentButton({ courseId }: { courseId: string }) {
     <Button
       onClick={onSubmit}
       disabled={pending}
-      className="mt-8 h-12 w-full gap-2 rounded-lg text-base font-semibold shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5"
+      className="mt-6 h-11 w-full gap-2 rounded-lg text-base font-semibold shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5"
     >
       {pending ? (
         <>
